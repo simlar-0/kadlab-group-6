@@ -3,7 +3,7 @@
 package main
 
 import (
-	"d7024e/kademlia"
+	"kadlab-group-6/kademlia"
 	"fmt"
 )
 

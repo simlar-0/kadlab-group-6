@@ -1,3 +1,4 @@
-module d7024e
+module kadlab-group-6
 
-go 1.22.1
+go 1.23.0
+
