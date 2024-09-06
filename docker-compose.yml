@@ -27,6 +27,10 @@ services:
       - "4000-4050:4000"
     networks:
       - kademlia_network
+    environment:
+      - ALPHA=3
+      - B=160
+      - K=20
       
 networks:
   kademlia_network:
