@@ -1,4 +1,4 @@
-package kademlia
+package kademlia_node
 
 import (
 	"container/list"

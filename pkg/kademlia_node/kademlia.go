@@ -1,4 +1,5 @@
-package kademlia
+package kademlia_node
+
 
 type Kademlia struct {
 }
