@@ -1,18 +1,16 @@
 package kademlia_node
 
-
 const bucketSize = 20
-
 
 // RoutingTable definition
 // keeps a refrence contact of me and an array of buckets
 type RoutingTable struct {
-	me      Contact
+	me      *Contact
 	buckets [IDLength * 8]*bucket
 }
 
 // NewRoutingTable returns a new instance of a RoutingTable
-func NewRoutingTable(me Contact) *RoutingTable {
+func NewRoutingTable(me *Contact) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < IDLength*8; i++ {
 		routingTable.buckets[i] = newBucket()
@@ -68,4 +66,12 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	}
 
 	return IDLength*8 - 1
+}
+
+func (RoutingTable *RoutingTable) UpdateRoutingTable(contact Contact) {
+	// Get the bucket index
+	// Get the bucket
+	// Check if the bucket is full
+	// If the bucket is full, ping the least recently seen contact
+	// If the contact is still alive, move it to the front of the bucket
 }

@@ -25,4 +25,4 @@ RUN go mod download
 RUN go build -o kadlab ./cmd/kademlia_main
 
 # Run the binary
-CMD ["./kadlab"]
+ENTRYPOINT ["./kadlab"]
