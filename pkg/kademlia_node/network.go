@@ -1,7 +1,6 @@
 package kademlia_node
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
@@ -17,16 +16,19 @@ const (
 )
 
 type Network struct {
-	me       *Contact
-	outgoing chan RPC
-	wg       sync.WaitGroup
+	me              *Contact
+	responseChannel chan *RPC
+	wg              sync.WaitGroup
+	messageHandler  *MessageHandler
 }
 
-func NewNetwork(me *Contact) *Network {
+func NewNetwork(me *Contact, messageHandler *MessageHandler) *Network {
 	return &Network{
-		me:       me,
-		outgoing: make(chan RPC, Buffer),
-		wg:       sync.WaitGroup{}}
+		me:              me,
+		responseChannel: make(chan *RPC, Buffer),
+		wg:              sync.WaitGroup{},
+		messageHandler:  messageHandler,
+	}
 }
 
 // Listen starts a UDP listener on the specified IP and port of the network node.
@@ -51,9 +53,9 @@ func (network *Network) Listen() {
 	// Start the goroutines for handling incoming and outgoing connections
 	go network.read(listener)
 
-	// Create Alpha number of writer goroutines
+	// Create Alpha number of response goroutines
 	for i := 0; i < Alpha; i++ {
-		go network.writer(listener)
+		go network.responseWorker(listener)
 	}
 	network.wg.Wait()
 }
@@ -74,23 +76,24 @@ func (network *Network) read(listener *net.UDPConn) {
 
 		fmt.Println("Received message")
 
-		rpc, err := DeserializeMessage(buf[:n])
+		rpc, err := network.messageHandler.DeserializeMessage(buf[:n])
 		if err != nil {
 			fmt.Println("Error deserializing message:", err)
 			continue
 		}
 
-		go RequestHandler(rpc, network)
+		// Create a goroutine to handle the incoming message
+		go network.messageHandler.ProcessRequest(rpc, network)
 	}
 }
 
-// Continuously writes to the UDP connection from the outgoing channel
-func (network *Network) writer(listener *net.UDPConn) {
+// responseWorker sends responses to the destination nodes
+func (network *Network) responseWorker(listener *net.UDPConn) {
 	defer network.wg.Done()
 
-	for rpc := range network.outgoing {
+	for rpc := range network.responseChannel {
 		// Serialize the message
-		serializedMessage, err := SerializeMessage(rpc)
+		serializedMessage, err := network.messageHandler.SerializeMessage(rpc)
 		if err != nil {
 			fmt.Println("Error serializing message:", err)
 			continue
@@ -110,64 +113,61 @@ func (network *Network) writer(listener *net.UDPConn) {
 	}
 }
 
-func SerializeMessage(rpc RPC) (data []byte, err error) {
-	return json.Marshal(rpc)
+func (network *Network) SendResponse(rpc *RPC) {
+	network.responseChannel <- rpc
 }
 
-func DeserializeMessage(data []byte) (RPC, error) {
-	var rpc RPC
-	err := json.Unmarshal(data, &rpc)
-	return rpc, err
-}
-
-func SendResponse(rpc RPC, network *Network) {
-	network.outgoing <- rpc
-}
-
-func SendRequest(rpc RPC, network *Network) bool {
-	network.outgoing <- rpc
-
-	// TODO: Implement waiting for response and return false if timeout
-	// somewhere else?
-/* 	response, err := WaitForResponse(rpc, Timeout)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return false
-	}
-	fmt.Println("Received response:", response)
-	*/
-	return true 
-}
-
-func WaitForResponse(rpc RPC, timeout time.Duration) (RPC, error) {
+// SendRequest sends an RPC to the destination node and waits for a response
+// for a certain amount of time before timing out.
+func (network *Network) SendRequest(rpc *RPC) (*RPC, error) {
 	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", rpc.Destination.ip, rpc.Destination.port))
 	if err != nil {
 		fmt.Println("Error resolving UDP address:", err)
-		return RPC{}, err
+		return &RPC{}, err
 	}
 
+	// Create a UDP connection to the destination
 	conn, err := net.DialUDP("udp", nil, addr)
 	if err != nil {
 		fmt.Println("Error dialing UDP address:", err)
-		return RPC{}, err
+		return &RPC{}, err
 	}
 	defer conn.Close()
 
-	// Set read deadline
-	conn.SetReadDeadline(time.Now().Add(timeout))
+	// Serialize the message
+	serializedMessage, err := network.messageHandler.SerializeMessage(rpc)
+	if err != nil {
+		fmt.Println("Error serializing message:", err)
+		return &RPC{}, err
+	}
+
+	// Send the message
+	_, err = conn.WriteToUDP(serializedMessage, addr)
+	if err != nil {
+		fmt.Println("Error writing to UDP connection:", err)
+	}
+
+	// Wait for response
+	response, err := network.WaitForResponse(conn)
+
+	return response, err
+}
+
+func (network *Network) WaitForResponse(conn *net.UDPConn) (*RPC, error) {
+	conn.SetReadDeadline(time.Now().Add(Timeout))
 
 	buf := make([]byte, 1024)
-	_, _, err = conn.ReadFromUDP(buf)
+	_, _, err := conn.ReadFromUDP(buf)
 	if err != nil {
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			fmt.Println("Timeout waiting for response")
 		} else {
 			fmt.Println("Error reading from UDP connection:", err)
 		}
-		return RPC{}, err
+		return &RPC{}, err
 	}
 
-	rpc, _ = DeserializeMessage(buf)
+	rpc, _ := network.messageHandler.DeserializeMessage(buf)
 	return rpc, nil
 }
 

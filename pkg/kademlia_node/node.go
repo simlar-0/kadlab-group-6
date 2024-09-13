@@ -12,12 +12,13 @@ func NewNode() *Node {
 	ip := GetLocalIp("eth0")
 	port := GetRandomPort()
 	me := NewContact(NewRandomKademliaID(), ip, port)
-	network := NewNetwork(me)
+	messageHandler := NewMessageHandler()
+	network := NewNetwork(me, messageHandler)
 	return &Node{
 		me:             me,
 		routingTable:   NewRoutingTable(me),
 		Network:        network,
-		messageHandler: NewMessageHandler()}
+		messageHandler: messageHandler}
 }
 
 func (node *Node) LookupContact(target *Contact) {
@@ -31,3 +32,4 @@ func (node *Node) LookupData(hash string) {
 func (node *Node) Store(data []byte) {
 	// TODO
 }
+

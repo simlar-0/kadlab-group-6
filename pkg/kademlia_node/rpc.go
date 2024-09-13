@@ -33,11 +33,11 @@ func newPayload(Key *KademliaID, Data []byte, Contacts []Contact) *Payload {
 	return &Payload{Key: Key, Data: Data, Contacts: Contacts}
 }
 
-func newRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Sender *Contact, Destination *Contact) RPC {
-	return RPC{Type: Type, IsResponse: IsResponse, ID: ID, Payload: Payload, Sender: Sender, Destination: Destination}
+func newRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Sender *Contact, Destination *Contact) *RPC {
+	return &RPC{Type: Type, IsResponse: IsResponse, ID: ID, Payload: Payload, Sender: Sender, Destination: Destination}
 }
 
-func ValidateRPC(rpc RPC) bool {
+func ValidateRPC(rpc *RPC) bool {
 	// Check if the RPC type is valid
 	switch rpc.Type {
 	case PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, PingResponse, StoreResponse, FindNodeResponse, FindValueResponse:
