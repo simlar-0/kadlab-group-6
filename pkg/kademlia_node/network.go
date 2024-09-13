@@ -1,5 +1,7 @@
 package kademlia_node
 
+// TODO:
+
 import (
 	"encoding/json"
 	"fmt"
@@ -8,22 +10,27 @@ import (
 )
 
 type Network struct {
-	Me *Contact
+	me *Contact
 	// Channels for messages
-	Outgoing chan RPC
-	Incoming chan RPC
-	Wg       sync.WaitGroup
+	outgoing chan RPC
+	incoming chan RPC
+	wg       sync.WaitGroup
+	// Map to keep track of sent RPCs
+	sentRPCs map[string]*RPC
+	mu       sync.Mutex
 }
 
 func InitNetwork(me *Contact) *Network {
 	return &Network{
-		Outgoing: make(chan RPC),
-		Incoming: make(chan RPC),
-		Me:       me}
+		outgoing: make(chan RPC),
+		incoming: make(chan RPC),
+		me:       me,
+		sentRPCs: make(map[string]*RPC),
+		mu:       sync.Mutex{}}
 }
 
 func (network *Network) Listen() {
-	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", network.Me.Ip, network.Me.Port))
+	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", network.me.ip, network.me.port))
 	if err != nil {
 		fmt.Println("Error resolving UDP address:", err)
 		return
@@ -36,21 +43,21 @@ func (network *Network) Listen() {
 	}
 	defer listener.Close()
 
-	fmt.Printf("Listening on %s:%d\n", network.Me.Ip, network.Me.Port)
+	fmt.Printf("Listening on %s:%d\n", network.me.ip, network.me.port)
 
 	// WaitGroup to keep the goroutines alive
-	network.Wg.Add(3)
+	network.wg.Add(3)
 	// Start the goroutines for handling incoming and outgoing connections
 	go network.ContinouslyReadUDP(listener)
 	go network.ContinouslyWriteUDP(listener)
 	go network.HandleIncomingChannel()
-	network.Wg.Wait()
+	network.wg.Wait()
 }
 
 // ContinouslyReadUDP reads from the UDP connection
 // and sends the message to the Incoming channel
 func (network *Network) ContinouslyReadUDP(listener *net.UDPConn) {
-	defer network.Wg.Done()
+	defer network.wg.Done()
 	buf := make([]byte, 1024)
 
 	for {
@@ -71,27 +78,39 @@ func (network *Network) ContinouslyReadUDP(listener *net.UDPConn) {
 		}
 
 		// Send the message to the Incoming channel
-		network.Incoming <- rpc
+		network.incoming <- rpc
 	}
 }
 
 // HandleIncomingChannel handles the incoming messages from the Incoming channel
 // and sends the response to the Outgoing channel
 func (network *Network) HandleIncomingChannel() {
-	defer network.Wg.Done()
+	defer network.wg.Done()
 
-	for rpc := range network.Incoming {
-		rpc, _ := network.HandelIncomingRPC(rpc)
-
-		network.Outgoing <- rpc
+	for rpc := range network.incoming {
+		if rpc.IsResponse {
+			network.mu.Lock()
+			_, exists := network.sentRPCs[rpc.ID.String()]
+			if exists {
+				// Handle valid response
+				delete(network.sentRPCs, rpc.ID.String())
+			} else {
+				// Handle invalid response
+			}
+			network.mu.Unlock()
+		} else {
+			// Handle request
+			rpc, _ := network.HandelIncomingRPC(rpc)
+			network.outgoing <- rpc
+		}
 	}
 }
 
 // ContinouslyWriteUDP writes to the UDP connection from the Outgoing channel
 func (network *Network) ContinouslyWriteUDP(listener *net.UDPConn) {
-	defer network.Wg.Done()
+	defer network.wg.Done()
 
-	for rpc := range network.Outgoing {
+	for rpc := range network.outgoing {
 		// Serialize the message
 		serializedMessage, err := network.SerializeMessage(rpc)
 		if err != nil {
@@ -100,7 +119,7 @@ func (network *Network) ContinouslyWriteUDP(listener *net.UDPConn) {
 		}
 
 		// Get IP and port of the destination
-		addrPort, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", rpc.Destination.Ip, rpc.Destination.Port))
+		addrPort, err := net.ResolveUDPAddr("udp", fmt.Sprintf("%s:%d", rpc.Destination.ip, rpc.Destination.port))
 		if err != nil {
 			fmt.Println("Error parsing address and port:", err)
 			continue
@@ -119,7 +138,7 @@ func (network *Network) HandelIncomingRPC(rpc RPC) (RPC, error) {
 		return rpc, fmt.Errorf("invalid RPC")
 	}
 
-	rpc.Sender = network.Me
+	rpc.Sender = network.me
 	// Switch on the type of the RPC
 	switch rpc.Type {
 	case PingRPC:
@@ -171,5 +190,13 @@ func (network *Network) SendStoreResponse(rpc RPC) {
 }
 
 func (network *Network) SendMessage(rpc RPC) {
-	network.Outgoing <- rpc
+	network.mu.Lock()
+	network.sentRPCs[rpc.ID.String()] = &rpc
+	network.mu.Unlock()
+
+	network.outgoing <- rpc
+}
+
+func (network *Network) SendResponse(rpc RPC) {
+	network.outgoing <- rpc
 }

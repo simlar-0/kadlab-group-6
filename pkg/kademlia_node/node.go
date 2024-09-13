@@ -9,9 +9,9 @@ import (
 
 type Node struct {
 	// The contact of the node
-	Me *Contact
+	me *Contact
 	// The routing table of the node
-	RoutingTable *RoutingTable
+	routingTable *RoutingTable
 	// The network of the node
 	Network *Network
 	//
@@ -24,8 +24,8 @@ func NewNode() *Node {
 
 	me := NewContact(NewRandomKademliaID(), ip, port)
 	return &Node{
-		Me:           me,
-		RoutingTable: NewRoutingTable(me),
+		me:           me,
+		routingTable: NewRoutingTable(me),
 		Network:      InitNetwork(me)}
 }
 
@@ -33,7 +33,7 @@ func NewNode() *Node {
 func GetPort() int {
 	source := rand.NewSource(time.Now().UnixNano())
 	randomgen := rand.New(source)
-
+	
 	return randomgen.Intn(65535-1024) + 1024
 }
 

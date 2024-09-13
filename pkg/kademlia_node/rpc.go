@@ -2,7 +2,8 @@ package kademlia_node
 
 type RPC struct {
 	// Type of the RPC
-	Type RPCType
+	Type       RPCType
+	IsResponse bool
 	// ID of the RPC
 	ID *KademliaID
 	// The data of the RPC message
@@ -36,8 +37,8 @@ func newPayload(Key *KademliaID, Data []byte, Contacts []Contact) *Payload {
 	return &Payload{Key: Key, Data: Data, Contacts: Contacts}
 }
 
-func newRPC(Type RPCType, ID *KademliaID, Payload *Payload, Sender *Contact, Destination *Contact) *RPC {
-	return &RPC{Type: Type, ID: ID, Payload: Payload, Sender: Sender, Destination: Destination}
+func newRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Sender *Contact, Destination *Contact) *RPC {
+	return &RPC{Type: Type, IsResponse: IsResponse, ID: ID, Payload: Payload, Sender: Sender, Destination: Destination}
 }
 
 func ValidateRPC(rpc RPC) bool {

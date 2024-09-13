@@ -22,9 +22,9 @@ func newBucket() *bucket {
 func (bucket *bucket) AddContact(contact Contact) {
 	var element *list.Element
 	for e := bucket.list.Front(); e != nil; e = e.Next() {
-		nodeID := e.Value.(Contact).ID
+		nodeID := e.Value.(Contact).id
 
-		if (contact).ID.Equals(nodeID) {
+		if (contact).id.Equals(nodeID) {
 			element = e
 		}
 	}
@@ -38,7 +38,7 @@ func (bucket *bucket) AddContact(contact Contact) {
 	}
 }
 
-// GetContactAndCalcDistance returns an array of Contacts where 
+// GetContactAndCalcDistance returns an array of Contacts where
 // the distance has already been calculated
 func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
 	var contacts []Contact
