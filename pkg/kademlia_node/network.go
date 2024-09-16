@@ -48,15 +48,16 @@ func (network *Network) Listen() {
 
 	fmt.Printf("Listening on %s:%d\n", network.me.ip, network.me.port)
 
-	// WaitGroup to keep the goroutines alive
-	network.wg.Add(2)
 	// Start the goroutines for handling incoming and outgoing connections
+	network.wg.Add(1)
 	go network.read(listener)
 
 	// Create Alpha number of response goroutines
 	for i := 0; i < Alpha; i++ {
+		network.wg.Add(1)
 		go network.responseWorker(listener)
 	}
+	// WaitGroup to keep the goroutines alive
 	network.wg.Wait()
 }
 
