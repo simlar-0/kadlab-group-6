@@ -20,7 +20,7 @@ func NewRoutingTable(me *Contact) *RoutingTable {
 }
 
 // AddContact add a new contact to the correct Bucket
-func (routingTable *RoutingTable) AddContact(contact Contact) {
+func (routingTable *RoutingTable) AddContact(contact *Contact) {
 	bucketIndex := routingTable.getBucketIndex(contact.id)
 	bucket := routingTable.buckets[bucketIndex]
 	bucket.AddContact(contact)
@@ -68,7 +68,7 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	return IDLength*8 - 1
 }
 
-func (RoutingTable *RoutingTable) UpdateRoutingTable(contact Contact) {
+func (RoutingTable *RoutingTable) UpdateRoutingTable(contact *Contact) {
 	// Get the bucket index
 	// Get the bucket
 	// Check if the bucket is full

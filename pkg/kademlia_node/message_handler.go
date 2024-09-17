@@ -6,6 +6,7 @@ import (
 )
 
 type MessageHandler struct {
+	Network *Network
 }
 
 func NewMessageHandler() *MessageHandler {
@@ -22,16 +23,16 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC, network *Network) {
 	switch rpc.Type {
 	case PingRequest:
 		// TODO: Update the RoutingTable
-		network.SendResponse(handler.NewPingResponse(rpc))
+		network.SendResponse(handler.SendPingResponse(rpc))
 	case StoreRequest:
 		// TODO: Store the data
-		network.SendResponse(handler.NewStoreResponse(rpc))
+		network.SendResponse(handler.SendStoreResponse(rpc))
 	case FindNodeRequest:
 		// TODO: Find the closest nodes
-		network.SendResponse(handler.NewFindNodeResponse(rpc))
+		network.SendResponse(handler.SendFindNodeResponse(rpc))
 	case FindValueRequest:
 		// TODO: Find the value
-		network.SendResponse(handler.NewFindValueResponse(rpc))
+		network.SendResponse(handler.SendFindValueResponse(rpc))
 	}
 }
 
@@ -45,42 +46,47 @@ func (handler *MessageHandler) DeserializeMessage(data []byte) (*RPC, error) {
 	return rpc, err
 }
 
-func (handler *MessageHandler) NewPingRequest(sender *Contact, destination *Contact) *RPC {
-	//TODO: implement
-	return newRPC(PingRequest, false, NewRandomKademliaID(), nil, sender, destination)
+func (handler *MessageHandler) SendPingRequest(sender *Contact, destination *Contact) (*RPC, error) {
+    RPC := newRPC(PingRequest, false, NewRandomKademliaID(), nil, sender, destination)
+    response, err := handler.Network.SendRequest(RPC)
+    return response, err
 }
 
-func (handler *MessageHandler) NewPingResponse(rpc *RPC) *RPC {
+func (handler *MessageHandler) SendPingResponse(rpc *RPC) *RPC {
 	//TODO: implement
 	return newRPC(PingResponse, true, rpc.ID, nil, rpc.Destination, rpc.Sender)
 }
 
-func (handler *MessageHandler) NewStoreRequest(sender *Contact, destination *Contact, key *KademliaID, data []byte) *RPC {
-	//TODO: implement
-	return newRPC(StoreRequest, false, NewRandomKademliaID(), newPayload(key, data, nil), sender, destination)
+func (handler *MessageHandler) SendStoreRequest(sender *Contact, destination *Contact, data []byte) (*RPC, error) {
+    RPC := newRPC(StoreRequest, false, NewRandomKademliaID(), newPayload(NewRandomKademliaID(),data,nil,), sender, destination)
+    response, err := handler.Network.SendRequest(RPC)
+    return response, err
 }
 
-func (handler *MessageHandler) NewStoreResponse(rpc *RPC) *RPC {
+
+func (handler *MessageHandler) SendStoreResponse(rpc *RPC) *RPC {
 	//TODO: implement
 	return newRPC(StoreResponse, true, rpc.ID, nil, rpc.Destination, rpc.Sender)
 }
 
-func (handler *MessageHandler) NewFindNodeRequest(sender *Contact, destination *Contact, key *KademliaID) *RPC {
-	//TODO: implement
-	return newRPC(FindNodeRequest, false, NewRandomKademliaID(), newPayload(key, nil, nil), sender, destination)
+func (handler *MessageHandler) SendFindNodeRequest(sender *Contact, destination *Contact, key *KademliaID) (*RPC, error) {
+	RPC := newRPC(FindNodeRequest, false, NewRandomKademliaID(), nil, sender, destination)
+	response, err := handler.Network.SendRequest(RPC)
+	return response, err
 }
 
-func (handler *MessageHandler) NewFindNodeResponse(rpc *RPC) *RPC {
+func (handler *MessageHandler) SendFindNodeResponse(rpc *RPC) *RPC {
 	//TODO: implement
 	return newRPC(FindNodeResponse, true, rpc.ID, newPayload(nil, nil, []Contact{}), rpc.Destination, rpc.Sender)
 }
 
-func (handler *MessageHandler) NewFindValueRequest(sender *Contact, destination *Contact, key *KademliaID) *RPC {
-	//TODO: implement
-	return newRPC(FindValueRequest, false, NewRandomKademliaID(), newPayload(key, nil, nil), sender, destination)
+func (handler *MessageHandler) SendFindValueRequest(sender *Contact, destination *Contact, key *KademliaID) (*RPC, error) {
+    RPC := newRPC(FindValueRequest, false, NewRandomKademliaID(), nil, sender, destination)
+    response, err := handler.Network.SendRequest(RPC)
+    return response, err
 }
 
-func (handler *MessageHandler) NewFindValueResponse(rpc *RPC) *RPC {
+func (handler *MessageHandler) SendFindValueResponse(rpc *RPC) *RPC {
 	//TODO: implement
 	return newRPC(FindValueResponse, true, rpc.ID, newPayload(nil, rpc.Payload.Data, rpc.Payload.Contacts), rpc.Destination, rpc.Sender)
 }
