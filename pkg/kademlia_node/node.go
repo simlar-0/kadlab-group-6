@@ -10,7 +10,7 @@ type Node struct {
 // NewNode returns a new instance of a Node
 func NewNode() *Node {
 	ip := GetLocalIp("eth0")
-	port := GetRandomPort()
+	port := GetRandomPortOrDefault()
 	me := NewContact(NewRandomKademliaID(), ip, port)
 	messageHandler := NewMessageHandler()
 	network := NewNetwork(me, messageHandler)
@@ -32,4 +32,3 @@ func (node *Node) LookupData(hash string) {
 func (node *Node) Store(data []byte) {
 	// TODO
 }
-

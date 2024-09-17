@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -173,10 +175,19 @@ func (network *Network) WaitForResponse(conn *net.UDPConn) (*RPC, error) {
 }
 
 // Get random port between 1024 and 65535
-func GetRandomPort() int {
+func GetRandomPortOrDefault() int {
+	// Check if PORT is in the environment
+	portStr := os.Getenv("PORT")
+	if portStr != "" {
+		port, err := strconv.Atoi(portStr)
+		if err == nil {
+			return port
+		}
+	}
+	
+	// If not, generate a random port
 	source := rand.NewSource(time.Now().UnixNano())
 	randomgen := rand.New(source)
-
 	return randomgen.Intn(65535-1024) + 1024
 }
 
