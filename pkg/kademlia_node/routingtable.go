@@ -1,17 +1,16 @@
-package kademlia
+package kademlia_node
 
 const bucketSize = 20
-
 
 // RoutingTable definition
 // keeps a refrence contact of me and an array of buckets
 type RoutingTable struct {
-	me      Contact
+	me      *Contact
 	buckets [IDLength * 8]*bucket
 }
 
 // NewRoutingTable returns a new instance of a RoutingTable
-func NewRoutingTable(me Contact) *RoutingTable {
+func NewRoutingTable(me *Contact) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < IDLength*8; i++ {
 		routingTable.buckets[i] = newBucket()
@@ -22,7 +21,7 @@ func NewRoutingTable(me Contact) *RoutingTable {
 
 // AddContact add a new contact to the correct Bucket
 func (routingTable *RoutingTable) AddContact(contact Contact) {
-	bucketIndex := routingTable.getBucketIndex(contact.ID)
+	bucketIndex := routingTable.getBucketIndex(contact.id)
 	bucket := routingTable.buckets[bucketIndex]
 	bucket.AddContact(contact)
 }
@@ -57,7 +56,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID, count 
 
 // getBucketIndex get the correct Bucket index for the KademliaID
 func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
-	distance := id.CalcDistance(routingTable.me.ID)
+	distance := id.CalcDistance(routingTable.me.id)
 	for i := 0; i < IDLength; i++ {
 		for j := 0; j < 8; j++ {
 			if (distance[i]>>uint8(7-j))&0x1 != 0 {
@@ -67,4 +66,12 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	}
 
 	return IDLength*8 - 1
+}
+
+func (RoutingTable *RoutingTable) UpdateRoutingTable(contact Contact) {
+	// Get the bucket index
+	// Get the bucket
+	// Check if the bucket is full
+	// If the bucket is full, ping the least recently seen contact
+	// If the contact is still alive, move it to the front of the bucket
 }
