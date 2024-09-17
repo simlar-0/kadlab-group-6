@@ -176,11 +176,12 @@ func (network *Network) WaitForResponse(conn *net.UDPConn) (*RPC, error) {
 
 // Get random port between 1024 and 65535
 func GetRandomPortOrDefault() int {
-	// Check if PORT is in the environment
-	portStr := os.Getenv("PORT")
-	if portStr != "" {
-		port, err := strconv.Atoi(portStr)
-		if err == nil {
+	// If the node is a bootstrap node, use the port specified in the environment
+	isBootstrapNode, _ := strconv.ParseBool(os.Getenv("IS_BOOTSTRAP_NODE"))
+	if isBootstrapNode {
+		portStr := os.Getenv("BOOTSTRAP_PORT")
+		if portStr != "" {
+			port, _ := strconv.Atoi(portStr)
 			return port
 		}
 	}

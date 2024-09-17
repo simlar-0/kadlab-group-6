@@ -54,6 +54,7 @@ func (handler *MessageHandler) SendPingRequest(sender *Contact, destination *Con
 
 func (handler *MessageHandler) SendPingResponse(rpc *RPC) *RPC {
 	//TODO: implement
+	// network.SendResponse(rpc)
 	return newRPC(PingResponse, true, rpc.ID, nil, rpc.Destination, rpc.Sender)
 }
 
@@ -66,6 +67,7 @@ func (handler *MessageHandler) SendStoreRequest(sender *Contact, destination *Co
 
 func (handler *MessageHandler) SendStoreResponse(rpc *RPC) *RPC {
 	//TODO: implement
+	// network.SendResponse(rpc)
 	return newRPC(StoreResponse, true, rpc.ID, nil, rpc.Destination, rpc.Sender)
 }
 
@@ -77,6 +79,7 @@ func (handler *MessageHandler) SendFindNodeRequest(sender *Contact, destination 
 
 func (handler *MessageHandler) SendFindNodeResponse(rpc *RPC) *RPC {
 	//TODO: implement
+	// network.SendResponse(rpc)
 	return newRPC(FindNodeResponse, true, rpc.ID, newPayload(nil, nil, []Contact{}), rpc.Destination, rpc.Sender)
 }
 
@@ -88,5 +91,6 @@ func (handler *MessageHandler) SendFindValueRequest(sender *Contact, destination
 
 func (handler *MessageHandler) SendFindValueResponse(rpc *RPC) *RPC {
 	//TODO: implement
+	// network.SendResponse(rpc)
 	return newRPC(FindValueResponse, true, rpc.ID, newPayload(nil, rpc.Payload.Data, rpc.Payload.Contacts), rpc.Destination, rpc.Sender)
 }

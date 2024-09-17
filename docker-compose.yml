@@ -18,7 +18,9 @@ services:
       - ALPHA=3
       - B=160
       - K=20
-      - PORT=4000
+      - IS_BOOTSTRAP_NODE=true
+      - BOOTSTRAP_PORT=4000
+      - BOOTSTRAP_ID=FFFFFFFF00000000000000000000000000000000
 
   kademliaNodes:
     image: kadlab:latest
@@ -40,6 +42,10 @@ services:
       - ALPHA=3
       - B=160
       - K=20
+      - IS_BOOTSTRAP_NODE=false
+      - BOOTSTRAP_IP=bootstrap-node
+      - BOOTSTRAP_PORT=4000
+      - BOOTSTRAP_ID=FFFFFFFF00000000000000000000000000000000
       
 networks:
   kademlia_network:

@@ -1,5 +1,9 @@
 package kademlia_node
 
+import (
+	"fmt"
+)
+
 type Node struct {
 	me             *Contact
 	routingTable   *RoutingTable
@@ -8,10 +12,10 @@ type Node struct {
 }
 
 // NewNode returns a new instance of a Node
-func NewNode() *Node {
+func NewNode(id *KademliaID) *Node {
 	ip := GetLocalIp("eth0")
 	port := GetRandomPortOrDefault()
-	me := NewContact(NewRandomKademliaID(), ip, port)
+	me := NewContact(id, ip, port)
 	messageHandler := NewMessageHandler()
 	network := NewNetwork(me, messageHandler)
 	messageHandler.Network = network
@@ -41,10 +45,11 @@ func (node *Node) Store(data []byte) {
 }
 
 func (node *Node) Join(contact *Contact) {
+	fmt.Println("Joining the network")
 	// Add the contact to the routing table
-	node.routingTable.AddContact(contact)
+	//node.routingTable.AddContact(contact)
 	// Perform a lookupNode on myself
-	node.LookupContact(node.me)
+	//node.LookupContact(node.me)
 	// Refresh all buckets further away than the closest neighbor
 	// Update the routing table with the results
 }
