@@ -13,7 +13,7 @@ func NewMessageHandler() *MessageHandler {
 	return &MessageHandler{}
 }
 
-func (handler *MessageHandler) ProcessRequest(rpc *RPC, network *Network) {
+func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
 	if !ValidateRPC(rpc) || rpc.IsResponse {
 		fmt.Errorf("invalid RPC")
 		return
@@ -23,16 +23,16 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC, network *Network) {
 	switch rpc.Type {
 	case PingRequest:
 		// TODO: Update the RoutingTable
-		network.SendResponse(handler.SendPingResponse(rpc))
+		handler.SendPingResponse(rpc)
 	case StoreRequest:
 		// TODO: Store the data
-		network.SendResponse(handler.SendStoreResponse(rpc))
+		handler.SendStoreResponse(rpc)
 	case FindNodeRequest:
 		// TODO: Find the closest nodes
-		network.SendResponse(handler.SendFindNodeResponse(rpc))
+		handler.SendFindNodeResponse(rpc)
 	case FindValueRequest:
 		// TODO: Find the value
-		network.SendResponse(handler.SendFindValueResponse(rpc))
+		handler.SendFindValueResponse(rpc)
 	}
 }
 

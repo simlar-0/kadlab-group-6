@@ -86,7 +86,7 @@ func (network *Network) read(listener *net.UDPConn) {
 		}
 
 		// Create a goroutine to handle the incoming message
-		go network.messageHandler.ProcessRequest(rpc, network)
+		go network.messageHandler.ProcessRequest(rpc)
 	}
 }
 
@@ -184,7 +184,7 @@ func GetRandomPortOrDefault() int {
 			return port
 		}
 	}
-	
+
 	// If not, generate a random port
 	source := rand.NewSource(time.Now().UnixNano())
 	randomgen := rand.New(source)
