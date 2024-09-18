@@ -1,12 +1,16 @@
 package kademlia_node
 
+import (
+	"fmt"
+)
+
 type RPC struct {
-	Type        RPCType `json:"type"`
-	IsResponse  bool   `json:"isResponse"`
-	ID          *KademliaID `json:"id"`
-	Payload     *Payload `json:"payload"`
-	Destination *Contact `json:"destination"`
-	Sender      *Contact `json:"sender"`
+	ID          *KademliaID `json:"ID"`
+	Type        RPCType     `json:"Type"`
+	IsResponse  bool        `json:"IsResponse"`
+	Destination *Contact    `json:"Destination"`
+	Source      *Contact    `json:"Source"`
+	Payload     *Payload    `json:"Payload"`
 }
 
 type Payload struct {
@@ -33,8 +37,8 @@ func newPayload(Key *KademliaID, Data []byte, Contacts []*Contact) *Payload {
 	return &Payload{Key: Key, Data: Data, Contacts: Contacts}
 }
 
-func newRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Sender *Contact, Destination *Contact) *RPC {
-	return &RPC{Type: Type, IsResponse: IsResponse, ID: ID, Payload: Payload, Sender: Sender, Destination: Destination}
+func newRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Source *Contact, Destination *Contact) *RPC {
+	return &RPC{Type: Type, IsResponse: IsResponse, ID: ID, Payload: Payload, Source: Source, Destination: Destination}
 }
 
 func ValidateRPC(rpc *RPC) bool {
@@ -45,4 +49,14 @@ func ValidateRPC(rpc *RPC) bool {
 	default:
 		return false
 	}
+}
+
+// String returns the string representation of the RPC
+func (rpc *RPC) String() string {
+	return fmt.Sprintf(`RPC(ID: "%s", Type: "%s", IsResponse: "%t", Destination: "%s", Source: "%s", Payload: "%s")`, rpc.ID, rpc.Type, rpc.IsResponse, rpc.Destination, rpc.Source, rpc.Payload)
+}
+
+// String returns the string representation of the Payload
+func (payload *Payload) String() string {
+	return fmt.Sprintf(`Payload(Key: "%s", Data: "%s", Contacts: "%s")`, payload.Key, payload.Data, payload.Contacts)
 }

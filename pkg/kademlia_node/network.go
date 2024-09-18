@@ -86,7 +86,7 @@ func (network *Network) read(listener *net.UDPConn) {
 			continue
 		}
 		fmt.Println("Received message with RPC ID:", rpc.ID)
-		fmt.Println("From address: ", rpc.Sender.Ip, rpc.Sender.Port)
+		fmt.Println("From address: ", rpc.Source.Ip, rpc.Source.Port)
 
 		// Check if the message is a response to a request
 		reqID := rpc.ID.String()
@@ -180,12 +180,14 @@ func (network *Network) SendRequest(rpc *RPC) (*RPC, error) {
 	}
 	fmt.Println("Sent request with RPC ID: ", rpc.ID)
 	fmt.Println("To address: ", addr)
+	fmt.Println("Request: ", rpc)
 
 	fmt.Println("Waiting for response to RPC ID: ", rpc.ID)
 	// Wait for response or timeout
 	select {
 	case response := <-recievedResponse:
 		fmt.Println("Received response to RPC ID: ", rpc.ID)
+		fmt.Println("Response: ", response)
 		return response, nil
 	case <-time.After(Timeout):
 		return &RPC{}, fmt.Errorf("timeout waiting for response to RPC ID: %s", rpc.ID)

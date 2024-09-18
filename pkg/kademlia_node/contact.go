@@ -32,7 +32,7 @@ func (contact *Contact) Less(otherContact *Contact) bool {
 
 // String returns a simple string representation of a Contact
 func (contact *Contact) String() string {
-	return fmt.Sprintf(`contact(Id: "%s", Address: "%s":"%d", Distance: "%d")`, contact.Id, contact.Ip, contact.Port, contact.Distance)
+	return fmt.Sprintf(`contact(Id: "%s", Address: "%s":"%d", Distance: "%s")`, contact.Id, contact.Ip, contact.Port, contact.Distance)
 }
 
 // ContactCandidates definition
