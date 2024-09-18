@@ -8,10 +8,10 @@ import (
 // Contact definition
 // stores the KademliaID, the ip address and the distance
 type Contact struct {
-	Id       *KademliaID `json:"id"`
-	Ip       string      `json:"ip"`
-	Port     int         `json:"port"`
-	Distance *KademliaID `json:"distance"`
+	Id       *KademliaID `json:"Id"`
+	Ip       string      `json:"Ip"`
+	Port     int         `json:"Port"`
+	Distance *KademliaID `json:"Distance"`
 }
 
 // NewContact returns a new instance of a Contact
@@ -32,7 +32,7 @@ func (contact *Contact) Less(otherContact *Contact) bool {
 
 // String returns a simple string representation of a Contact
 func (contact *Contact) String() string {
-	return fmt.Sprintf(`contact("%s", "%s", "%d")`, contact.Id, contact.Ip, contact.Port)
+	return fmt.Sprintf(`contact(Id: "%s", Address: "%s":"%d", Distance: "%d")`, contact.Id, contact.Ip, contact.Port, contact.Distance)
 }
 
 // ContactCandidates definition

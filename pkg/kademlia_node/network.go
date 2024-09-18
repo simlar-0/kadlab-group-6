@@ -22,7 +22,7 @@ type Network struct {
 	Me             *Contact
 	Wg             sync.WaitGroup
 	ResponseQueue  chan *RPC
-	SentRequests   map[*KademliaID]chan *RPC
+	SentRequests   map[string]chan *RPC
 	Mutex          sync.Mutex
 }
 
@@ -30,7 +30,7 @@ func NewNetwork(me *Contact, messageHandler *MessageHandler) *Network {
 	return &Network{
 		Me:             me,
 		ResponseQueue:  make(chan *RPC, Buffer),
-		SentRequests:   make(map[*KademliaID]chan *RPC, Buffer),
+		SentRequests:   make(map[string]chan *RPC),
 		Wg:             sync.WaitGroup{},
 		MessageHandler: messageHandler,
 	}
@@ -89,12 +89,14 @@ func (network *Network) read(listener *net.UDPConn) {
 		fmt.Println("From address: ", rpc.Sender.Ip, rpc.Sender.Port)
 
 		// Check if the message is a response to a request
+		reqID := rpc.ID.String()
 		network.Mutex.Lock()
-		recievedResponse, exists := network.SentRequests[rpc.ID]
+		recievedResponse, exists := network.SentRequests[reqID]
 		if exists {
+			fmt.Println("Request in SentRequests ", rpc.ID)
 			// Send the response to the request channel
 			recievedResponse <- rpc
-			delete(network.SentRequests, rpc.ID)
+			delete(network.SentRequests, reqID)
 		}
 		network.Mutex.Unlock()
 
@@ -165,8 +167,9 @@ func (network *Network) SendRequest(rpc *RPC) (*RPC, error) {
 
 	// Create a unique request ID and response channel
 	recievedResponse := make(chan *RPC)
+	reqID := rpc.ID.String()
 	network.Mutex.Lock()
-	network.SentRequests[rpc.ID] = recievedResponse
+	network.SentRequests[reqID] = recievedResponse
 	network.Mutex.Unlock()
 
 	// Send the message
@@ -178,6 +181,7 @@ func (network *Network) SendRequest(rpc *RPC) (*RPC, error) {
 	fmt.Println("Sent request with RPC ID: ", rpc.ID)
 	fmt.Println("To address: ", addr)
 
+	fmt.Println("Waiting for response to RPC ID: ", rpc.ID)
 	// Wait for response or timeout
 	select {
 	case response := <-recievedResponse:
