@@ -3,6 +3,7 @@ package kademlia_node
 import (
 	"container/list"
 	"sort"
+	"strings"
 )
 
 // shortlist represents a list of contacts sorted by distance to a target ID
@@ -23,11 +24,14 @@ func NewShortlist(target *KademliaID, k int) *shortlist {
 
 // AddContact adds a contact to the shortlist
 func (shortlist *shortlist) AddContact(contact *Contact) {
-	contact.CalcDistance(shortlist.Target)
-	shortlist.Contacts.PushBack(contact)
-	if shortlist.Contacts.Len() > shortlist.K {
-		shortlist.Sort()
-		shortlist.Contacts.Remove(shortlist.Contacts.Back())
+	// If the contact is already in the shortlist, skip
+	if !shortlist.Contains(contact) {
+		contact.CalcDistance(shortlist.Target)
+		shortlist.Contacts.PushBack(contact)
+		if shortlist.Contacts.Len() > shortlist.K {
+			shortlist.Sort()
+			shortlist.Contacts.Remove(shortlist.Contacts.Back())
+		}
 	}
 }
 
@@ -120,6 +124,21 @@ func (shortlist *shortlist) Contains(contact *Contact) bool {
 		}
 	}
 	return false
+}
+
+// String returns a simple string representation of a shortlist
+func (shortlist *shortlist) String() string {
+	var contacts []string
+	for elt := shortlist.Contacts.Front(); elt != nil; elt = elt.Next() {
+		contact := elt.Value.(*Contact)
+		contacts = append(contacts, contact.String())
+	}
+	return "[" + strings.Join(contacts, ", ") + "]"
+}
+
+// Len returns the length of the shortlist
+func (shortlist *shortlist) Len() int {
+	return shortlist.Contacts.Len()
 }
 
 // byDistance is a wrapper type for sorting contacts by distance

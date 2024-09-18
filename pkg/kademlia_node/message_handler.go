@@ -6,12 +6,13 @@ import (
 )
 
 type MessageHandler struct {
-	Network      *Network
 	RoutingTable *RoutingTable
+	Network      *Network
 }
 
 func NewMessageHandler(routingTable *RoutingTable) *MessageHandler {
-	return &MessageHandler{RoutingTable: routingTable}
+	handler := &MessageHandler{RoutingTable: routingTable}
+	return handler
 }
 
 func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
@@ -21,10 +22,9 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
 	}
 
 	fmt.Println("RPC: ", rpc)
-	// Add the sender to the routing table or update it
+	// Add the source to the routing table or update it
 	handler.RoutingTable.AddContact(rpc.Source)
 	fmt.Println("Added contact to routing table")
-
 
 	switch rpc.Type {
 	case PingRequest:
@@ -83,7 +83,7 @@ func (handler *MessageHandler) SendStoreRequest(source *Contact, destination *Co
 
 func (handler *MessageHandler) SendStoreResponse(requestRPC *RPC) *RPC {
 	//TODO: implement
-	// network.SendResponse(rpc)
+	// handler.Network.SendResponse(rpc)
 	return newRPC(StoreResponse, true, requestRPC.ID, nil, requestRPC.Destination, requestRPC.Source)
 }
 
@@ -110,6 +110,6 @@ func (handler *MessageHandler) SendFindValueRequest(source *Contact, destination
 
 func (handler *MessageHandler) SendFindValueResponse(requestRPC *RPC) *RPC {
 	//TODO: implement
-	// network.SendResponse(rpc)
+	// handler.Network.SendResponse(rpc)
 	return newRPC(FindValueResponse, true, requestRPC.ID, newPayload(nil, requestRPC.Payload.Data, requestRPC.Payload.Contacts), requestRPC.Destination, requestRPC.Source)
 }

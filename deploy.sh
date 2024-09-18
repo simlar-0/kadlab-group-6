@@ -8,4 +8,4 @@ docker rm -f $(docker ps -aq)
 docker build . -t kadlab
 
 # Step 3: Deploy the Docker Compose stack with scaling
-docker-compose up --scale kademliaNodes=5 -d
+docker-compose up --scale kademliaNodes=50 -d

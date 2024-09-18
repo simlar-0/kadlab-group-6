@@ -41,7 +41,7 @@ func (bucket *bucket) AddContact(contact Contact) {
 }
 
 // RemoveContact removes the Contact from the bucket
-func (bucket *bucket) RemoveContact(contact *Contact) {
+func (bucket *bucket) RemoveContact(contact Contact) {
 	for elt := bucket.List.Front(); elt != nil; elt = elt.Next() {
 		if elt.Value.(Contact).Id.Equals(contact.Id) {
 			bucket.List.Remove(elt)
@@ -67,4 +67,9 @@ func (bucket *bucket) GetContactAndCalcDistance(target *KademliaID) []*Contact {
 // Len return the size of the bucket
 func (bucket *bucket) Len() int {
 	return bucket.List.Len()
+}
+
+// Returns the least recently seen contact in the bucket
+func (bucket *bucket) GetLeastRecentlySeenContact() Contact {
+	return bucket.List.Back().Value.(Contact)
 }

@@ -14,7 +14,7 @@ import (
 const (
 	Timeout = 10 * time.Second
 	Alpha   = 3
-	Buffer  = 10
+	Buffer  = 100
 )
 
 type Network struct {
@@ -26,14 +26,25 @@ type Network struct {
 	Mutex          sync.Mutex
 }
 
-func NewNetwork(me *Contact, messageHandler *MessageHandler) *Network {
-	return &Network{
-		Me:             me,
-		ResponseQueue:  make(chan *RPC, Buffer),
-		SentRequests:   make(map[string]chan *RPC),
-		Wg:             sync.WaitGroup{},
-		MessageHandler: messageHandler,
-	}
+var (
+	networkInstance *Network
+	once            sync.Once
+)
+
+func NewNetwork(me *Contact) *Network {
+	once.Do(func() {
+		networkInstance = &Network{
+			Me:            me,
+			ResponseQueue: make(chan *RPC, Buffer),
+			SentRequests:  make(map[string]chan *RPC),
+			Wg:            sync.WaitGroup{},
+		}
+	})
+	return networkInstance
+}
+
+func (n *Network) SetMessageHandler(handler *MessageHandler) {
+	n.MessageHandler = handler
 }
 
 // Listen starts a UDP listener on the specified IP and port of the network node.
@@ -69,7 +80,7 @@ func (network *Network) Listen() {
 // reads from the UDP connection and handles the incoming messages
 func (network *Network) read(listener *net.UDPConn) {
 	defer network.Wg.Done()
-	buf := make([]byte, 1024)
+	buf := make([]byte, 16384)
 
 	for {
 		fmt.Println("Waiting for message")
@@ -90,21 +101,28 @@ func (network *Network) read(listener *net.UDPConn) {
 
 		// Check if the message is a response to a request
 		reqID := rpc.ID.String()
-		network.Mutex.Lock()
-		recievedResponse, exists := network.SentRequests[reqID]
+		recievedResponse, exists := network.CheckIfResponse(reqID)
+
 		if exists {
 			fmt.Println("Request in SentRequests ", rpc.ID)
 			// Send the response to the request channel
 			recievedResponse <- rpc
 			delete(network.SentRequests, reqID)
 		}
-		network.Mutex.Unlock()
 
 		if !exists {
 			// Create a goroutine to handle the incoming requests
 			go network.MessageHandler.ProcessRequest(rpc)
 		}
 	}
+}
+
+// Check if the message is a response to a request
+func (network *Network) CheckIfResponse(reqID string) (chan *RPC, bool) {
+	network.Mutex.Lock()
+	defer network.Mutex.Unlock()
+	recievedResponse, exists := network.SentRequests[reqID]
+	return recievedResponse, exists
 }
 
 // responseSender sends responses to the destination nodes
@@ -126,6 +144,8 @@ func (network *Network) responseSender(listener *net.UDPConn) {
 			continue
 		}
 
+		fmt.Println("Sending response: ", rpc)
+
 		// Send the message
 		_, err = listener.WriteToUDP(serializedMessage, addrPort)
 		if err != nil {
@@ -133,6 +153,7 @@ func (network *Network) responseSender(listener *net.UDPConn) {
 		}
 		fmt.Println("Sent response with RPC ID: ", rpc.ID)
 		fmt.Println("To address: ", addrPort)
+		fmt.Println("Size of response: ", len(serializedMessage))
 	}
 }
 

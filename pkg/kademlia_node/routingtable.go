@@ -32,6 +32,22 @@ func (routingTable *RoutingTable) AddContact(contact *Contact) {
 
 	bucketIndex := routingTable.getBucketIndex(contact.Id)
 	bucket := routingTable.Buckets[bucketIndex]
+	// Check if the bucket is full
+	if bucket.Len() >= routingTable.K {
+		// Ping the least recently seen contact
+		MessageHandler := NewMessageHandler(routingTable)
+		MessageHandler.Network = NewNetwork(routingTable.Me)
+		leastRecent := bucket.GetLeastRecentlySeenContact()
+		_, err := MessageHandler.SendPingRequest(routingTable.Me, &leastRecent)
+		if err != nil {
+			// If the contact is still alive, move it to the front of the bucket
+			bucket.AddContact(bucket.GetLeastRecentlySeenContact())
+		} else {
+			// If the contact is not alive, remove it from the bucket
+			bucket.RemoveContact(bucket.GetLeastRecentlySeenContact())
+		}
+		return
+	}
 	bucket.AddContact(*contact)
 }
 
@@ -76,15 +92,14 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 	return IDLength*8 - 1
 }
 
+// UpdateRoutingTable updates the RoutingTable with a list of new contacts
 func (routingTable *RoutingTable) UpdateRoutingTable(contacts []*Contact) {
 	routingTable.Mu.Lock()
 	defer routingTable.Mu.Unlock()
 
-	// Get the bucket index
-	// Get the bucket
-	// Check if the bucket is full
-	// If the bucket is full, ping the least recently seen contact
-	// If the contact is still alive, move it to the front of the bucket
+	for _, contact := range contacts {
+		routingTable.AddContact(contact)
+	}
 }
 
 func (routingTable *RoutingTable) Refresh(KademliaID *KademliaID) {

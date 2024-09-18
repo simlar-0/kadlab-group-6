@@ -28,9 +28,10 @@ func NewNode(id *KademliaID) *Node {
 	me := NewContact(id, ip, port)
 	routingTable := NewRoutingTable(me, k)
 	messageHandler := NewMessageHandler(routingTable)
-	network := NewNetwork(me, messageHandler)
+	network := NewNetwork(me)
+	network.MessageHandler = messageHandler
 	messageHandler.Network = network
-
+	fmt.Println("Node created with ID: ", id)
 	return &Node{
 		Me:             me,
 		RoutingTable:   routingTable,
@@ -60,7 +61,7 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 		var wg sync.WaitGroup
 
 		if len(alphaClosest) == 0 {
-			return shortlist.GetClosestContacts(node.K)
+			return shortlist.GetClosestContacts(shortlist.Len())
 		}
 
 		// Send asynchronous FindNode requests to the alpha closest (not contacted) contacts in the shortlist
@@ -74,6 +75,7 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 				if err != nil {
 					// Dead contacts are removed from the shortlist
 					shortlist.RemoveContact(c)
+					return
 				}
 				// Add the k closest contacts from the response to the shortlist
 				responseChannel <- contacts.Payload.Contacts
@@ -86,7 +88,10 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 		// Process responses
 		for contacts := range responseChannel {
 			for _, contact := range contacts {
-				shortlist.AddContact(contact)
+				// if the contact is me, skip
+				if !contact.Id.Equals(node.Me.Id) {
+					shortlist.AddContact(contact)
+				}
 			}
 		}
 
@@ -107,12 +112,12 @@ func (node *Node) Store(data []byte) {
 	// TODO
 }
 
-func (node *Node) Join(contact *Contact) {
+func (node *Node) Join(contact *Contact) (err error) {
 	fmt.Println("Joining the network")
 	// Ping the contact to see if it is alive
-	_, err := node.MessageHandler.SendPingRequest(node.Me, contact)
-	if err != nil {
-		// handle no response
+	_, e := node.MessageHandler.SendPingRequest(node.Me, contact)
+	if e != nil {
+		return e
 	}
 	// Add the contact to the routing table
 	node.RoutingTable.AddContact(contact)
@@ -120,8 +125,8 @@ func (node *Node) Join(contact *Contact) {
 	contacts := node.LookupContact(node.Me)
 	fmt.Println("Lookup complete: ", contacts)
 	// Update the routing table with the results
-	//node.routingTable.UpdateRoutingTable(contacts)
+	node.RoutingTable.UpdateRoutingTable(contacts)
 	// Refresh all buckets further away than the closest neighbor
 	//node.routingTable.Refresh(contact.id)
-
+	return nil
 }
