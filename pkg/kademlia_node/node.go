@@ -59,6 +59,10 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 		responseChannel := make(chan []*Contact, len(alphaClosest))
 		var wg sync.WaitGroup
 
+		if len(alphaClosest) == 0 {
+			return shortlist.GetClosestContacts(node.K)
+		}
+
 		// Send asynchronous FindNode requests to the alpha closest (not contacted) contacts in the shortlist
 		for _, contact := range alphaClosest {
 			contacted[contact.Id] = true
@@ -111,9 +115,10 @@ func (node *Node) Join(contact *Contact) {
 		// handle no response
 	}
 	// Add the contact to the routing table
-	//node.routingTable.AddContact(contact)
+	node.RoutingTable.AddContact(contact)
 	// Perform a lookupNode on myself
-	//contacts := node.LookupContact(node.me)
+	contacts := node.LookupContact(node.Me)
+	fmt.Println("Lookup complete: ", contacts)
 	// Update the routing table with the results
 	//node.routingTable.UpdateRoutingTable(contacts)
 	// Refresh all buckets further away than the closest neighbor

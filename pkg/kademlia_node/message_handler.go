@@ -95,9 +95,10 @@ func (handler *MessageHandler) SendFindNodeRequest(source *Contact, destination 
 
 func (handler *MessageHandler) SendFindNodeResponse(requestRPC *RPC) *RPC {
 	// Get the k closest nodes to the target
-	// contacts := handler.routingTable.FindClosestContacts(requestRPC.Payload.Key, 20)
-	// network.SendResponse(rpc)
-	return newRPC(FindNodeResponse, true, requestRPC.ID, newPayload(nil, nil, []*Contact{}), requestRPC.Destination, requestRPC.Source)
+	contacts := handler.RoutingTable.FindClosestContacts(requestRPC.Payload.Key)
+	rpc := newRPC(FindNodeResponse, true, requestRPC.ID, newPayload(nil, nil, contacts), requestRPC.Destination, requestRPC.Source)
+	handler.Network.SendResponse(rpc)
+	return rpc
 }
 
 func (handler *MessageHandler) SendFindValueRequest(source *Contact, destination *Contact, key *KademliaID) (*RPC, error) {
