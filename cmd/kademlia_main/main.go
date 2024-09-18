@@ -7,6 +7,7 @@ import (
 	kademlia "kadlab-group-6/pkg/kademlia_node"
 	"os"
 	"strconv"
+	"sync"
 )
 
 var (
@@ -28,6 +29,8 @@ func main() {
 	}
 	node := kademlia.NewNode(id)
 
+	var wg sync.WaitGroup
+	wg.Add(1) // Add a counter to the WaitGroup
 	// Create a bootstrap node and join the network
 	if !isBootstrapNode {
 		fmt.Println("Creating a bootstrap node")
@@ -35,12 +38,13 @@ func main() {
 			kademlia.NewKademliaID(BootstrapNodeId),
 			BootstrapNodeAddress,
 			BootstrapNodePort)
-
+		go node.Network.Listen()
 		node.Join(bootstrapNode)
 		fmt.Println("Joined the bootstrap network: ")
 		fmt.Println(bootstrapNode)
 	} else {
 		fmt.Println("This node is a bootstrap node")
+		go node.Network.Listen()
 	}
-	node.Network.Listen()
+	wg.Wait() // Wait for all goroutines to finish
 }

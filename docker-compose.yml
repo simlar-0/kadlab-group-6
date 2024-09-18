@@ -1,17 +1,8 @@
-version: "3.7"
 services:
   bootstrap-node:
     image: kadlab:latest 
     stdin_open: true
     tty: true
-    deploy:
-      mode: replicated
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 10s
     networks:
       - kademlia_network
     environment:
@@ -26,14 +17,6 @@ services:
     image: kadlab:latest
     stdin_open: true
     tty: true
-    deploy:
-      mode: replicated
-      replicas: 3 
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        max_attempts: 3
-        window: 10s
     depends_on:
       - bootstrap-node
     networks:
@@ -49,7 +32,7 @@ services:
       
 networks:
   kademlia_network:
-    driver: overlay
+    driver: bridge
     ipam:
       config:
         - subnet: 10.1.1.0/24

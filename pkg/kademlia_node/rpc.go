@@ -1,18 +1,18 @@
 package kademlia_node
 
 type RPC struct {
-	Type        RPCType
-	IsResponse  bool
-	ID          *KademliaID
-	Payload     *Payload
-	Destination *Contact
-	Sender      *Contact
+	Type        RPCType `json:"type"`
+	IsResponse  bool   `json:"isResponse"`
+	ID          *KademliaID `json:"id"`
+	Payload     *Payload `json:"payload"`
+	Destination *Contact `json:"destination"`
+	Sender      *Contact `json:"sender"`
 }
 
 type Payload struct {
 	Key      *KademliaID
 	Data     []byte
-	Contacts []Contact
+	Contacts []*Contact
 }
 
 type RPCType string
@@ -29,7 +29,7 @@ const (
 	FindValueResponse RPCType = "FIND_VALUE_RESPONSE"
 )
 
-func newPayload(Key *KademliaID, Data []byte, Contacts []Contact) *Payload {
+func newPayload(Key *KademliaID, Data []byte, Contacts []*Contact) *Payload {
 	return &Payload{Key: Key, Data: Data, Contacts: Contacts}
 }
 

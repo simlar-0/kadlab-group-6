@@ -8,10 +8,10 @@ import (
 // Contact definition
 // stores the KademliaID, the ip address and the distance
 type Contact struct {
-	id       *KademliaID
-	ip       string
-	port     int
-	distance *KademliaID
+	Id       *KademliaID `json:"id"`
+	Ip       string      `json:"ip"`
+	Port     int         `json:"port"`
+	Distance *KademliaID `json:"distance"`
 }
 
 // NewContact returns a new instance of a Contact
@@ -22,32 +22,32 @@ func NewContact(id *KademliaID, address string, port int) *Contact {
 // CalcDistance calculates the distance to the target and
 // fills the contacts distance field
 func (contact *Contact) CalcDistance(target *KademliaID) {
-	contact.distance = contact.id.CalcDistance(target)
+	contact.Distance = contact.Id.CalcDistance(target)
 }
 
 // Less returns true if contact.distance < otherContact.distance
 func (contact *Contact) Less(otherContact *Contact) bool {
-	return contact.distance.Less(otherContact.distance)
+	return contact.Distance.Less(otherContact.Distance)
 }
 
 // String returns a simple string representation of a Contact
 func (contact *Contact) String() string {
-	return fmt.Sprintf(`contact("%s", "%s", "%d")`, contact.id, contact.ip, contact.port)
+	return fmt.Sprintf(`contact("%s", "%s", "%d")`, contact.Id, contact.Ip, contact.Port)
 }
 
 // ContactCandidates definition
 // stores an array of Contacts
 type ContactCandidates struct {
-	contacts []Contact
+	contacts []*Contact
 }
 
 // Append an array of Contacts to the ContactCandidates
-func (candidates *ContactCandidates) Append(contacts []Contact) {
+func (candidates *ContactCandidates) Append(contacts []*Contact) {
 	candidates.contacts = append(candidates.contacts, contacts...)
 }
 
 // GetContacts returns the first count number of Contacts
-func (candidates *ContactCandidates) GetContacts(count int) []Contact {
+func (candidates *ContactCandidates) GetContacts(count int) []*Contact {
 	return candidates.contacts[:count]
 }
 
@@ -70,5 +70,5 @@ func (candidates *ContactCandidates) Swap(i, j int) {
 // Less returns true if the Contact at index i is smaller than
 // the Contact at index j
 func (candidates *ContactCandidates) Less(i, j int) bool {
-	return candidates.contacts[i].Less(&candidates.contacts[j])
+	return candidates.contacts[i].Less(candidates.contacts[j])
 }
