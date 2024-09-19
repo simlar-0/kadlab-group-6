@@ -7,7 +7,7 @@ import (
 type RoutingTable struct {
 	Node    *Node
 	Buckets []*bucket
-	Mu      sync.RWMutex
+	Mutex   sync.RWMutex
 }
 
 var (
@@ -20,8 +20,8 @@ func NewRoutingTable(node *Node) *RoutingTable {
 	routingSingleton.Do(func() {
 		routingTableInstance = &RoutingTable{
 			Node: node}
-		routingTableInstance.Buckets = make([]*bucket, node.B*8)
-		for i := 0; i < node.B*8; i++ {
+		routingTableInstance.Buckets = make([]*bucket, IDLength*8)
+		for i := 0; i < IDLength*8; i++ {
 			routingTableInstance.Buckets[i] = newBucket(node.K)
 		}
 	})
@@ -30,8 +30,8 @@ func NewRoutingTable(node *Node) *RoutingTable {
 
 // AddContact add a new contact to the correct Bucket
 func (routingTable *RoutingTable) AddContact(contact *Contact) {
-	routingTable.Mu.Lock()
-	defer routingTable.Mu.Unlock()
+	routingTable.Mutex.Lock()
+	defer routingTable.Mutex.Unlock()
 
 	// Update the distance of the contact
 	contact.CalcDistance(routingTable.Node.Me.Id)
@@ -57,8 +57,8 @@ func (routingTable *RoutingTable) AddContact(contact *Contact) {
 
 // FindClosestContacts finds the count closest Contacts to the target in the RoutingTable
 func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID) []*Contact {
-	routingTable.Mu.Lock()
-	defer routingTable.Mu.Unlock()
+	routingTable.Mutex.Lock()
+	defer routingTable.Mutex.Unlock()
 
 	var candidates ContactCandidates
 	bucketIndex := routingTable.getBucketIndex(target)
@@ -92,20 +92,12 @@ func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
 			}
 		}
 	}
-
 	return IDLength*8 - 1
 }
 
 // UpdateRoutingTable updates the RoutingTable with a list of new contacts
 func (routingTable *RoutingTable) UpdateRoutingTable(contacts []*Contact) {
-	routingTable.Mu.Lock()
-	defer routingTable.Mu.Unlock()
-
 	for _, contact := range contacts {
 		routingTable.AddContact(contact)
 	}
-}
-
-func (routingTable *RoutingTable) Refresh(KademliaID *KademliaID) {
-	// Refresh the bucket containing the KademliaID
 }

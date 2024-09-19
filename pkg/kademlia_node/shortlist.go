@@ -89,6 +89,14 @@ func (shortlist *shortlist) GetClosestContacts(k int) []*Contact {
 	return contacts
 }
 
+// GetClosestContact returns the closest contact from the shortlist
+func (shortlist *shortlist) GetClosestContact() *Contact {
+	if shortlist.Contacts.Len() == 0 {
+		return nil
+	}
+	return shortlist.Contacts.Front().Value.(*Contact)
+}
+
 // TrimToK trims the shortlist to length k
 func (shortlist *shortlist) TrimToK() {
 	for shortlist.Contacts.Len() > shortlist.K {
@@ -106,14 +114,6 @@ func (shortlist *shortlist) AllContacted(contacted map[*KademliaID]bool) bool {
 		}
 	}
 	return true && shortlist.Contacts.Len() == shortlist.K
-}
-
-// CheckClosestContact checks if the closest contact in the shortlist is closer than the given contact
-func (shortlist *shortlist) CheckClosestContact(contact *Contact) bool {
-	if shortlist.Contacts.Len() == 0 {
-		return true
-	}
-	return contact.Distance.Less(shortlist.Contacts.Front().Value.(*Contact).Distance)
 }
 
 // Contains checks if the shortlist contains a specific contact

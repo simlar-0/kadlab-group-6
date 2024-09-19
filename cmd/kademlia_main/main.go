@@ -21,30 +21,23 @@ var (
 func main() {
 	// Create a new node
 	fmt.Println("Creating a new node")
-	var id *kademlia.KademliaID
-	if !isBootstrapNode {
-		id = kademlia.NewRandomKademliaID()
-	} else {
-		id = kademlia.NewKademliaID(BootstrapNodeId)
-	}
-	node := kademlia.NewNode(id)
-
 	var wg sync.WaitGroup
-	wg.Add(1) // Add a counter to the WaitGroup
+	wg.Add(2)
+
 	// Create a bootstrap node and join the network
 	if !isBootstrapNode {
-		fmt.Println("Creating a bootstrap node")
 		bootstrapNode := kademlia.NewContact(
 			kademlia.NewKademliaID(BootstrapNodeId),
 			BootstrapNodeAddress,
 			BootstrapNodePort)
+		node := kademlia.NewNode(kademlia.NewRandomKademliaID())
 		go node.Network.Listen()
-		node.Join(bootstrapNode)
-		fmt.Println("Joined the bootstrap network: ")
-		fmt.Println(bootstrapNode)
+		go node.Join(bootstrapNode)
+		fmt.Println("Node id: ", node.Me.Id)
 	} else {
-		fmt.Println("This node is a bootstrap node")
+		node := kademlia.NewNode(kademlia.NewKademliaID(BootstrapNodeId))
 		go node.Network.Listen()
+		fmt.Println("Node id: ", node.Me.Id)
 	}
-	wg.Wait() // Wait for all goroutines to finish
+	wg.Wait() // Wait indefinitely
 }

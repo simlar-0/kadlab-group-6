@@ -14,14 +14,12 @@ type Node struct {
 	MessageHandler *MessageHandler
 	K              int
 	Alpha          int
-	B              int
 }
 
 // NewNode returns a new instance of a Node
 func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
 	alpha, _ := strconv.Atoi(os.Getenv("ALPHA"))
-	b, _ := strconv.Atoi(os.Getenv("B"))
 	ip := GetLocalIp("eth0")
 	port := GetRandomPortOrDefault()
 	me := NewContact(id, ip, port)
@@ -30,7 +28,6 @@ func NewNode(id *KademliaID) *Node {
 		Me:    me,
 		K:     k,
 		Alpha: alpha,
-		B:     b,
 	}
 
 	node.RoutingTable = NewRoutingTable(node)
@@ -51,6 +48,8 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 	for _, contact := range initialContacts {
 		shortlist.AddContact(contact)
 	}
+
+	closestContact := shortlist.GetClosestContact()
 
 	for {
 		// Get the alpha closest contacts from the shortlist not contacted
@@ -79,9 +78,11 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 				responseChannel <- contacts.Payload.Contacts
 			}(contact)
 		}
-
-		wg.Wait()
-		close(responseChannel)
+		// Wait for all goroutines to finish
+		go func() {
+			wg.Wait()
+			close(responseChannel)
+		}()
 
 		// Process responses
 		for contacts := range responseChannel {
@@ -95,7 +96,13 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 
 		// Check if all the contacts in the shortlist have been contacted
 		// or if the target is in the shortlist
-		if shortlist.AllContacted(contacted) || shortlist.Contains(target) {
+		// or if the closest contact has not changed
+		newClosestContact := shortlist.GetClosestContact()
+		if newClosestContact != nil {
+			closestContact = newClosestContact
+			// Use newClosestContact as needed
+		}
+		if shortlist.AllContacted(contacted) || shortlist.Contains(target) || closestContact.Id.Equals(newClosestContact.Id) {
 			return shortlist.GetClosestContacts(shortlist.Len())
 		}
 	}
@@ -121,10 +128,23 @@ func (node *Node) Join(contact *Contact) (err error) {
 	node.RoutingTable.AddContact(contact)
 	// Perform a lookupNode on myself
 	contacts := node.LookupContact(node.Me)
-	fmt.Println("Lookup complete: ", contacts)
 	// Update the routing table with the results
 	node.RoutingTable.UpdateRoutingTable(contacts)
 	// Refresh all buckets further away than the closest neighbor
-	node.RoutingTable.Refresh(contact.Id)
+	node.RefreshBuckets()
 	return nil
+}
+
+// RefreshBuckets refreshes all buckets further away than the closest neighbor
+func (node *Node) RefreshBuckets() {
+	// Get the closest neighbor
+	neighbor := node.RoutingTable.FindClosestContacts(node.Me.Id)[0]
+	// Get the bucket index of the neighbor
+	bucketIndex := node.RoutingTable.getBucketIndex(neighbor.Id)
+	// Refresh all buckets further away than the neighbor
+	for i := bucketIndex + 1; i < IDLength*8; i++ {
+		target := NewRandomKademliaIDInBucket(i, node.Me.Id)
+		contacts := node.LookupContact(NewContact(target, "", 0))
+		node.RoutingTable.UpdateRoutingTable(contacts)
+	}
 }
