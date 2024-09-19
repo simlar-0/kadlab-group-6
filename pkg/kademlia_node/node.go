@@ -9,6 +9,7 @@ import (
 
 type Node struct {
 	Me             *Contact
+	data           map[KademliaID][]byte
 	RoutingTable   *RoutingTable
 	Network        *Network
 	MessageHandler *MessageHandler
@@ -22,7 +23,7 @@ func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
 	alpha, _ := strconv.Atoi(os.Getenv("ALPHA"))
 	b, _ := strconv.Atoi(os.Getenv("B"))
-
+	data := map[KademliaID][]byte{}
 	ip := GetLocalIp("eth0")
 	port := GetRandomPortOrDefault()
 	me := NewContact(id, ip, port)
@@ -34,12 +35,14 @@ func NewNode(id *KademliaID) *Node {
 	fmt.Println("Node created with ID: ", id)
 	return &Node{
 		Me:             me,
+		data:           data,
 		RoutingTable:   routingTable,
 		Network:        network,
 		MessageHandler: messageHandler,
 		K:              k,
 		Alpha:          alpha,
-		B:              b}
+		B:              b,
+	}
 }
 
 func (node *Node) LookupContact(target *Contact) []*Contact {
@@ -112,15 +115,19 @@ func (node *Node) Store(data []byte) {
 	// TODO
 }
 
-func (node *Node) Join(contact *Contact) (err error) {
-	fmt.Println("Joining the network")
-	// Ping the contact to see if it is alive
-	_, e := node.MessageHandler.SendPingRequest(node.Me, contact)
+func (node *Node) Ping(target *Contact) (err error) {
+	_, e := node.MessageHandler.SendPingRequest(node.Me, target)
 	if e != nil {
 		return e
 	}
-	// Add the contact to the routing table
-	node.RoutingTable.AddContact(contact)
+	node.RoutingTable.AddContact(target)
+	return nil
+}
+
+func (node *Node) Join(contact *Contact) (err error) {
+	fmt.Println("Joining the network")
+
+	node.Ping(contact)
 	// Perform a lookupNode on myself
 	contacts := node.LookupContact(node.Me)
 	fmt.Println("Lookup complete: ", contacts)
