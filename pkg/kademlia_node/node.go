@@ -22,24 +22,22 @@ func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
 	alpha, _ := strconv.Atoi(os.Getenv("ALPHA"))
 	b, _ := strconv.Atoi(os.Getenv("B"))
-
 	ip := GetLocalIp("eth0")
 	port := GetRandomPortOrDefault()
 	me := NewContact(id, ip, port)
-	routingTable := NewRoutingTable(me, k)
-	messageHandler := NewMessageHandler(routingTable)
-	network := NewNetwork(me)
-	network.MessageHandler = messageHandler
-	messageHandler.Network = network
+
+	node := &Node{
+		Me:    me,
+		K:     k,
+		Alpha: alpha,
+		B:     b,
+	}
+
+	node.RoutingTable = NewRoutingTable(node)
+	node.MessageHandler = NewMessageHandler(node)
+	node.Network = NewNetwork(node)
 	fmt.Println("Node created with ID: ", id)
-	return &Node{
-		Me:             me,
-		RoutingTable:   routingTable,
-		Network:        network,
-		MessageHandler: messageHandler,
-		K:              k,
-		Alpha:          alpha,
-		B:              b}
+	return node
 }
 
 func (node *Node) LookupContact(target *Contact) []*Contact {
@@ -98,7 +96,7 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 		// Check if all the contacts in the shortlist have been contacted
 		// or if the target is in the shortlist
 		if shortlist.AllContacted(contacted) || shortlist.Contains(target) {
-			return shortlist.GetClosestContacts(node.K)
+			return shortlist.GetClosestContacts(shortlist.Len())
 		}
 	}
 }
@@ -127,6 +125,6 @@ func (node *Node) Join(contact *Contact) (err error) {
 	// Update the routing table with the results
 	node.RoutingTable.UpdateRoutingTable(contacts)
 	// Refresh all buckets further away than the closest neighbor
-	//node.routingTable.Refresh(contact.id)
+	node.RoutingTable.Refresh(contact.Id)
 	return nil
 }

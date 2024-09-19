@@ -6,12 +6,11 @@ import (
 )
 
 type MessageHandler struct {
-	RoutingTable *RoutingTable
-	Network      *Network
+	Node *Node
 }
 
-func NewMessageHandler(routingTable *RoutingTable) *MessageHandler {
-	handler := &MessageHandler{RoutingTable: routingTable}
+func NewMessageHandler(node *Node) *MessageHandler {
+	handler := &MessageHandler{Node: node}
 	return handler
 }
 
@@ -23,7 +22,7 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
 
 	fmt.Println("RPC: ", rpc)
 	// Add the source to the routing table or update it
-	handler.RoutingTable.AddContact(rpc.Source)
+	handler.Node.RoutingTable.AddContact(rpc.Source)
 	fmt.Println("Added contact to routing table")
 
 	switch rpc.Type {
@@ -34,7 +33,7 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
 		// TODO: Store the data
 		handler.SendStoreResponse(rpc)
 	case FindNodeRequest:
-		handler.RoutingTable.FindClosestContacts(rpc.Payload.Key)
+		handler.Node.RoutingTable.FindClosestContacts(rpc.Payload.Key)
 		handler.SendFindNodeResponse(rpc)
 	case FindValueRequest:
 		// TODO: Find the value
@@ -63,21 +62,21 @@ func (handler *MessageHandler) DeserializeMessage(data []byte) (*RPC, error) {
 func (handler *MessageHandler) SendPingRequest(source *Contact, destination *Contact) (*RPC, error) {
 	//TODO: implement
 	RPC := newRPC(PingRequest, false, NewRandomKademliaID(), nil, source, destination)
-	response, err := handler.Network.SendRequest(RPC)
+	response, err := handler.Node.Network.SendRequest(RPC)
 	return response, err
 }
 
 func (handler *MessageHandler) SendPingResponse(requestRPC *RPC) *RPC {
 	//TODO: implement
 	rpc := newRPC(PingResponse, true, requestRPC.ID, nil, requestRPC.Destination, requestRPC.Source)
-	handler.Network.SendResponse(rpc)
+	handler.Node.Network.SendResponse(rpc)
 	return rpc
 }
 
 func (handler *MessageHandler) SendStoreRequest(source *Contact, destination *Contact, data []byte) (*RPC, error) {
 	//TODO: implement
 	RPC := newRPC(StoreRequest, false, NewRandomKademliaID(), newPayload(NewRandomKademliaID(), data, nil), source, destination)
-	response, err := handler.Network.SendRequest(RPC)
+	response, err := handler.Node.Network.SendRequest(RPC)
 	return response, err
 }
 
@@ -89,22 +88,22 @@ func (handler *MessageHandler) SendStoreResponse(requestRPC *RPC) *RPC {
 
 func (handler *MessageHandler) SendFindNodeRequest(source *Contact, destination *Contact, target *KademliaID) (*RPC, error) {
 	RPC := newRPC(FindNodeRequest, false, NewRandomKademliaID(), newPayload(target, nil, nil), source, destination)
-	response, err := handler.Network.SendRequest(RPC)
+	response, err := handler.Node.Network.SendRequest(RPC)
 	return response, err
 }
 
 func (handler *MessageHandler) SendFindNodeResponse(requestRPC *RPC) *RPC {
 	// Get the k closest nodes to the target
-	contacts := handler.RoutingTable.FindClosestContacts(requestRPC.Payload.Key)
+	contacts := handler.Node.RoutingTable.FindClosestContacts(requestRPC.Payload.Key)
 	rpc := newRPC(FindNodeResponse, true, requestRPC.ID, newPayload(nil, nil, contacts), requestRPC.Destination, requestRPC.Source)
-	handler.Network.SendResponse(rpc)
+	handler.Node.Network.SendResponse(rpc)
 	return rpc
 }
 
 func (handler *MessageHandler) SendFindValueRequest(source *Contact, destination *Contact, key *KademliaID) (*RPC, error) {
 	//TODO: implement
 	RPC := newRPC(FindValueRequest, false, NewRandomKademliaID(), nil, source, destination)
-	response, err := handler.Network.SendRequest(RPC)
+	response, err := handler.Node.Network.SendRequest(RPC)
 	return response, err
 }
 

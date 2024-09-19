@@ -4,25 +4,28 @@ import (
 	"sync"
 )
 
-// RoutingTable definition
-// keeps a refrence contact of me and an array of buckets
 type RoutingTable struct {
-	Me      *Contact
-	Buckets [IDLength * 8]*bucket
-	K       int
+	Node    *Node
+	Buckets []*bucket
 	Mu      sync.RWMutex
 }
 
+var (
+	routingTableInstance *RoutingTable
+	routingSingleton     sync.Once
+)
+
 // NewRoutingTable returns a new instance of a RoutingTable
-func NewRoutingTable(me *Contact, k int) *RoutingTable {
-	routingTable := &RoutingTable{}
-	for i := 0; i < IDLength*8; i++ {
-		routingTable.Buckets[i] = newBucket(k)
-	}
-	routingTable.Me = me
-	routingTable.K = k
-	routingTable.Mu = sync.RWMutex{}
-	return routingTable
+func NewRoutingTable(node *Node) *RoutingTable {
+	routingSingleton.Do(func() {
+		routingTableInstance = &RoutingTable{
+			Node: node}
+		routingTableInstance.Buckets = make([]*bucket, node.B*8)
+		for i := 0; i < node.B*8; i++ {
+			routingTableInstance.Buckets[i] = newBucket(node.K)
+		}
+	})
+	return routingTableInstance
 }
 
 // AddContact add a new contact to the correct Bucket
@@ -30,15 +33,16 @@ func (routingTable *RoutingTable) AddContact(contact *Contact) {
 	routingTable.Mu.Lock()
 	defer routingTable.Mu.Unlock()
 
+	// Update the distance of the contact
+	contact.CalcDistance(routingTable.Node.Me.Id)
+
 	bucketIndex := routingTable.getBucketIndex(contact.Id)
 	bucket := routingTable.Buckets[bucketIndex]
 	// Check if the bucket is full
-	if bucket.Len() >= routingTable.K {
+	if bucket.Len() >= routingTable.Node.K {
 		// Ping the least recently seen contact
-		MessageHandler := NewMessageHandler(routingTable)
-		MessageHandler.Network = NewNetwork(routingTable.Me)
 		leastRecent := bucket.GetLeastRecentlySeenContact()
-		_, err := MessageHandler.SendPingRequest(routingTable.Me, &leastRecent)
+		_, err := routingTable.Node.MessageHandler.SendPingRequest(routingTable.Node.Me, &leastRecent)
 		if err != nil {
 			// If the contact is still alive, move it to the front of the bucket
 			bucket.AddContact(bucket.GetLeastRecentlySeenContact())
@@ -62,7 +66,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID) []*Con
 
 	candidates.Append(bucket.GetContactAndCalcDistance(target))
 
-	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < IDLength*8) && candidates.Len() < routingTable.K; i++ {
+	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < IDLength*8) && candidates.Len() < routingTable.Node.K; i++ {
 		if bucketIndex-i >= 0 {
 			bucket = routingTable.Buckets[bucketIndex-i]
 			candidates.Append(bucket.GetContactAndCalcDistance(target))
@@ -80,7 +84,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID) []*Con
 
 // getBucketIndex get the correct Bucket index for the KademliaID
 func (routingTable *RoutingTable) getBucketIndex(id *KademliaID) int {
-	distance := id.CalcDistance(routingTable.Me.Id)
+	distance := id.CalcDistance(routingTable.Node.Me.Id)
 	for i := 0; i < IDLength; i++ {
 		for j := 0; j < 8; j++ {
 			if (distance[i]>>uint8(7-j))&0x1 != 0 {

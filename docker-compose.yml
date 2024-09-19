@@ -6,9 +6,9 @@ services:
     networks:
       - kademlia_network
     environment:
-      - ALPHA=3
-      - B=160
-      - K=20
+      - ALPHA=3 # Number of nodes to contact in parallel
+      - B=20    # Number of bytes in the key
+      - K=20    # Number of nodes to store in the routing table
       - IS_BOOTSTRAP_NODE=true
       - BOOTSTRAP_PORT=4000
       - BOOTSTRAP_ID=FFFFFFFF00000000000000000000000000000000
@@ -23,7 +23,7 @@ services:
       - kademlia_network
     environment:
       - ALPHA=3
-      - B=160
+      - B=20
       - K=20
       - IS_BOOTSTRAP_NODE=false
       - BOOTSTRAP_IP=bootstrap-node
