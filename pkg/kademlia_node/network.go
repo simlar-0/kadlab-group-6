@@ -16,6 +16,13 @@ var (
 	NumberOfWorkers = 10              // Number of response workers
 )
 
+// NetworkInterface is an interface for sending and receiving messages
+type NetworkInterface interface {
+	SendRequest(rpc *RPC) (*RPC, error)
+	SendResponse(rpc *RPC)
+	Listen()
+}
+
 type Network struct {
 	Node          *Node
 	Wg            sync.WaitGroup

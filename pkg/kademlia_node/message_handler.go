@@ -14,10 +14,10 @@ func NewMessageHandler(node *Node) *MessageHandler {
 	return handler
 }
 
-func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
+func (handler *MessageHandler) ProcessRequest(rpc *RPC) (*RPC, error) {
 	if !ValidateRPC(rpc) || rpc.IsResponse {
 		fmt.Errorf("invalid RPC")
-		return
+		return nil, fmt.Errorf("invalid RPC")
 	}
 
 	fmt.Println("RPC: ", rpc)
@@ -28,17 +28,21 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
 	switch rpc.Type {
 	case PingRequest:
 		fmt.Println("Received PingRequest")
-		handler.SendPingResponse(rpc)
+		rpc := handler.SendPingResponse(rpc)
+		return rpc, nil
 	case StoreRequest:
 		// TODO: Store the data
-		handler.SendStoreResponse(rpc)
+		rpc := handler.SendStoreResponse(rpc)
+		return rpc, nil
 	case FindNodeRequest:
-		handler.Node.RoutingTable.FindClosestContacts(rpc.Payload.Key)
-		handler.SendFindNodeResponse(rpc)
+		rpc := handler.SendFindNodeResponse(rpc)
+		return rpc, nil
 	case FindValueRequest:
 		// TODO: Find the value
-		handler.SendFindValueResponse(rpc)
+		rpc := handler.SendFindValueResponse(rpc)
+		return rpc, nil
 	}
+	return nil, fmt.Errorf("invalid RPC")
 }
 
 func (handler *MessageHandler) SerializeMessage(rpc *RPC) (data []byte, err error) {
