@@ -12,7 +12,7 @@ import (
 
 var (
 	Timeout         = 3 * time.Second // Timeout for waiting for a response
-	Buffer          = 10              // Buffer size for the response queue
+	Buffer          = 50              // Buffer size for the response queue
 	NumberOfWorkers = 10              // Number of response workers
 )
 

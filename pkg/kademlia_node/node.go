@@ -98,13 +98,14 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 		// or if the target is in the shortlist
 		// or if the closest contact has not changed
 		newClosestContact := shortlist.GetClosestContact()
-		if newClosestContact != nil {
-			closestContact = newClosestContact
-			// Use newClosestContact as needed
+		if newClosestContact == nil {
+			return shortlist.GetClosestContacts(shortlist.Len())
 		}
+
 		if shortlist.AllContacted(contacted) || shortlist.Contains(target) || closestContact.Id.Equals(newClosestContact.Id) {
 			return shortlist.GetClosestContacts(shortlist.Len())
 		}
+		closestContact = newClosestContact
 	}
 }
 
@@ -132,6 +133,7 @@ func (node *Node) Join(contact *Contact) (err error) {
 	node.RoutingTable.UpdateRoutingTable(contacts)
 	// Refresh all buckets further away than the closest neighbor
 	node.RefreshBuckets()
+	fmt.Println("Joined the network")
 	return nil
 }
 
