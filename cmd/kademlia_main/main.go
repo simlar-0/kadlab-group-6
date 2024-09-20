@@ -40,6 +40,7 @@ func main() {
 			BootstrapNodePort)
 		go node.Network.Listen()
 		node.Join(bootstrapNode)
+		node.RoutingTable.PrintRoutingTable()
 		fmt.Println("Joined the bootstrap network: ")
 		fmt.Println(bootstrapNode)
 	} else {

@@ -1,6 +1,7 @@
 package kademlia_node
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -104,4 +105,11 @@ func (routingTable *RoutingTable) UpdateRoutingTable(contacts []*Contact) {
 
 func (routingTable *RoutingTable) Refresh(KademliaID *KademliaID) {
 	// Refresh the bucket containing the KademliaID
+}
+
+func (routingTable *RoutingTable) PrintRoutingTable() {
+	fmt.Println("--- Display routing table content ---")
+	for i := 0; i < IDLength*8; i++ {
+		routingTable.Buckets[i].PrintBucket()
+	}
 }
