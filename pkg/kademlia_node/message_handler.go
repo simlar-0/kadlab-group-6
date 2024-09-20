@@ -33,7 +33,7 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) {
 		// TODO: Store the data
 		handler.SendStoreResponse(rpc)
 	case FindNodeRequest:
-		handler.Node.RoutingTable.FindClosestContacts(rpc.Payload.Key)
+		fmt.Println("Received FindNodeRequest")
 		handler.SendFindNodeResponse(rpc)
 	case FindValueRequest:
 		// TODO: Find the value
