@@ -1,22 +1,13 @@
 package tests
 
 import (
-	//"encoding/json"
-
+	"encoding/json"
 	kademlia "kadlab-group-6/pkg/kademlia_node"
+	mocks "kadlab-group-6/pkg/mocks"
 	"testing"
 )
 
-func TestNewMessageHandler(t *testing.T) {
-	n := &kademlia.Node{}
-	handler := kademlia.NewMessageHandler(n)
-
-	if handler.Node != n {
-		t.Errorf("Expected Node %v, got %v", n, handler.Node)
-	}
-}
-
-func TestProcessRequest(t *testing.T) {
+func initNode() *kademlia.Node {
 	nodeID := kademlia.NewKademliaID("0000000000000000000000000000000000000000")
 	me := kademlia.NewContact(nodeID, "", 0)
 	node := &kademlia.Node{
@@ -25,7 +16,22 @@ func TestProcessRequest(t *testing.T) {
 	}
 	node.RoutingTable = kademlia.NewRoutingTable(node)
 	node.MessageHandler = kademlia.NewMessageHandler(node)
-	node.Network = NewMockNetwork()
+	node.Network = mocks.NewMockNetwork()
+
+	return node
+}
+
+func TestNewMessageHandler(t *testing.T) {
+	node := initNode()
+	handler := kademlia.NewMessageHandler(node)
+
+	if handler.Node != node {
+		t.Errorf("Expected Node %v, got %v", node, handler.Node)
+	}
+}
+
+func TestProcessRequest(t *testing.T) {
+	node := initNode()
 	rpcID := kademlia.NewRandomKademliaID()
 	source := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
 	destination := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
@@ -75,18 +81,15 @@ func TestProcessRequest(t *testing.T) {
 	}
 }
 
-/*
 func TestSerializeMessage(t *testing.T) {
-	n := &kademlia.Node{}
-	handler := kademlia.NewMessageHandler(n)
+	node := initNode()
 
-	id := kademlia.NewKademliaID("0000000000000000000000000000000000000000")
-	source := kademlia.NewContact(kademlia.NewKademliaID("1000000000000000000000000000000000000000"), "1.2.3.4", 1234)
-	destination := kademlia.NewContact(kademlia.NewKademliaID("2000000000000000000000000000000000000000"), "5.6.7.8", 5678)
-	payload := kademlia.NewPayload(id, []byte("test data"), nil)
-	rpc := kademlia.NewRPC(kademlia.PingRequest, false, id, payload, source, destination)
+	rpcID := kademlia.NewRandomKademliaID()
+	source := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	destination := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	rpc := kademlia.NewRPC(kademlia.PingRequest, false, rpcID, nil, source, destination)
 
-	data, err := handler.SerializeMessage(rpc)
+	data, err := node.MessageHandler.SerializeMessage(rpc)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -103,21 +106,19 @@ func TestSerializeMessage(t *testing.T) {
 }
 
 func TestDeserializeMessage(t *testing.T) {
-	n := &kademlia.Node{}
-	handler := kademlia.NewMessageHandler(n)
+	node := initNode()
 
-	id := kademlia.NewKademliaID("0000000000000000000000000000000000000000")
-	source := kademlia.NewContact(kademlia.NewKademliaID("1000000000000000000000000000000000000000"), "1.2.3.4", 1234)
-	destination := kademlia.NewContact(kademlia.NewKademliaID("2000000000000000000000000000000000000000"), "5.6.7.8", 5678)
-	payload := kademlia.NewPayload(id, []byte("test data"), nil)
-	rpc := kademlia.NewRPC(kademlia.PingRequest, false, id, payload, source, destination)
+	rpcID := kademlia.NewRandomKademliaID()
+	source := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	destination := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	rpc := kademlia.NewRPC(kademlia.PingRequest, false, rpcID, nil, source, destination)
 
-	data, err := handler.SerializeMessage(rpc)
+	data, err := json.Marshal(rpc)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 
-	deserializedRPC, err := handler.DeserializeMessage(data)
+	deserializedRPC, err := node.MessageHandler.DeserializeMessage(data)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
@@ -128,44 +129,41 @@ func TestDeserializeMessage(t *testing.T) {
 }
 
 func TestSendPingRequest(t *testing.T) {
-	n := &kademlia.Node{
-		Network: &kademlia.Network{},
+	node := initNode()
+
+	source := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	destination := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+
+	_, err := node.MessageHandler.SendPingRequest(source, destination)
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
 	}
-	handler := kademlia.NewMessageHandler(n)
+}
 
-	source := kademlia.NewContact(kademlia.NewKademliaID("1000000000000000000000000000000000000000"), "1.2.3.4", 1234)
-	destination := kademlia.NewContact(kademlia.NewKademliaID("2000000000000000000000000000000000000000"), "5.6.7.8", 5678)
+func TestSendFindNodeRequest(t *testing.T) {
+	node := initNode()
 
-	_, err := handler.SendPingRequest(source, destination)
+	source := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	destination := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	key := kademlia.NewRandomKademliaID()
+
+	_, err := node.MessageHandler.SendFindNodeRequest(source, destination, key)
 	if err != nil {
 		t.Errorf("Expected no error, got %v", err)
 	}
 }
 
 func TestSendPingResponse(t *testing.T) {
-	n := &kademlia.Node{
-		Network: &kademlia.Network{},
-	}
-	handler := kademlia.NewMessageHandler(n)
+	node := initNode()
 
-	id := kademlia.NewKademliaID("0000000000000000000000000000000000000000")
-	source := kademlia.NewContact(kademlia.NewKademliaID("1000000000000000000000000000000000000000"), "1.2.3.4", 1234)
-	destination := kademlia.NewContact(kademlia.NewKademliaID("2000000000000000000000000000000000000000"), "5.6.7.8", 5678)
-	payload := kademlia.NewPayload(id, []byte("test data"), nil)
-	requestRPC := kademlia.NewRPC(kademlia.PingRequest, false, id, payload, source, destination)
+	rpcID := kademlia.NewRandomKademliaID()
+	source := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	destination := kademlia.NewContact(kademlia.NewRandomKademliaID(), "", 0)
+	requestRPC := kademlia.NewRPC(kademlia.PingRequest, false, rpcID, nil, source, destination)
+	expectedRPC := kademlia.NewRPC(kademlia.PingResponse, true, rpcID, nil, destination, source)
 
-	responseRPC := handler.SendPingResponse(requestRPC)
-	if responseRPC.Type != kademlia.PingResponse {
-		t.Errorf("Expected PingResponse, got %s", responseRPC.Type)
-	}
-	if responseRPC.IsResponse != true {
-		t.Errorf("Expected IsResponse true, got %t", responseRPC.IsResponse)
-	}
-	if responseRPC.Source.String() != destination.String() {
-		t.Errorf("Expected Source %s, got %s", destination.String(), responseRPC.Source.String())
-	}
-	if responseRPC.Destination.String() != source.String() {
-		t.Errorf("Expected Destination %s, got %s", source.String(), responseRPC.Destination.String())
+	responseRPC := node.MessageHandler.SendPingResponse(requestRPC)
+	if responseRPC.String() != expectedRPC.String() {
+		t.Errorf("Expected RPC: %s, got %s", expectedRPC, requestRPC)
 	}
 }
-*/

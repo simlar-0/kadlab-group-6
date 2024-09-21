@@ -1,4 +1,4 @@
-package tests
+package mocks
 
 import (
 	kademlia "kadlab-group-6/pkg/kademlia_node"
@@ -17,7 +17,7 @@ func NewMockNetwork() *MockNetwork {
 func (m *MockNetwork) SendRequest(rpc *kademlia.RPC) (*kademlia.RPC, error) {
 	m.sentMessages = append(m.sentMessages, rpc)
 
-	return nil, nil
+	return rpc, nil
 }
 
 func (m *MockNetwork) SendResponse(rpc *kademlia.RPC) {
