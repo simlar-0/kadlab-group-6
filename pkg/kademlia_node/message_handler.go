@@ -7,10 +7,13 @@ import (
 
 type MessageHandler struct {
 	Node *Node
+	Network *Network
 }
 
-func NewMessageHandler(node *Node) *MessageHandler {
-	handler := &MessageHandler{Node: node}
+func NewMessageHandler(node *Node, network *Network) *MessageHandler {
+	handler := &MessageHandler{
+		Node: node,
+		Network: network,}
 	return handler
 }
 
@@ -75,6 +78,7 @@ func (handler *MessageHandler) SendPingResponse(requestRPC *RPC) *RPC {
 
 func (handler *MessageHandler) SendStoreRequest(source *Contact, destination *Contact, data []byte) (*RPC, error) {
 	//TODO: implement
+	// Create a new RPC for the StoreRequest
 	RPC := NewRPC(StoreRequest, false, NewRandomKademliaID(), NewPayload(NewRandomKademliaID(), data, nil), source, destination)
 	response, err := handler.Node.Network.SendRequest(RPC)
 	return response, err
@@ -82,8 +86,14 @@ func (handler *MessageHandler) SendStoreRequest(source *Contact, destination *Co
 
 func (handler *MessageHandler) SendStoreResponse(requestRPC *RPC) *RPC {
 	//TODO: implement
-	// handler.Network.SendResponse(rpc)
-	return NewRPC(StoreResponse, true, requestRPC.ID, nil, requestRPC.Destination, requestRPC.Source)
+	// Create a new RPC for the StoreResponse
+	responseRPC := NewRPC(StoreResponse, true, requestRPC.ID, nil, requestRPC.Destination, requestRPC.Source)
+	
+	// Send the response using the network
+	handler.Network.SendResponse(responseRPC)
+	
+	// Return the response RPC
+	return responseRPC
 }
 
 func (handler *MessageHandler) SendFindNodeRequest(source *Contact, destination *Contact, target *KademliaID) (*RPC, error) {

@@ -5,6 +5,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"crypto/sha256"
+	"encoding/hex"
 )
 
 type Node struct {
@@ -31,7 +33,7 @@ func NewNode(id *KademliaID) *Node {
 	}
 
 	node.RoutingTable = NewRoutingTable(node)
-	node.MessageHandler = NewMessageHandler(node)
+	node.MessageHandler = NewMessageHandler(node, node.Network)
 	node.Network = NewNetwork(node)
 	fmt.Println("Node created with ID: ", id)
 	return node
@@ -111,12 +113,32 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 
 func (node *Node) LookupData(hash string) {
 	// TODO
-
+	
 }
 
-func (node *Node) Store(data []byte) {
+func (node *Node) Store(data []byte) (err error) {
 	// TODO
+	fmt.Println("Storing the data")
+	// Generate the key for the data (e.g., using a hash function)
+	key := GenerateKey(data)
+	target := &Contact{Id: key}
+
+	// Use LookupContact to find the k closest nodes to the key
+	closestContacts := node.LookupContact(target)
+
+	// Send STORE_REQUEST to each of the closest contacts
+	for _, contact := range closestContacts {
+		_, err := node.MessageHandler.SendStoreRequest(node.Me, contact, data)
+		if err != nil {
+			// Handle error (e.g., log it, retry, etc.)
+			fmt.Printf("Failed to store data on node %s: %v\n", contact.Id, err)
+		}
+	}
+	fmt.Println("Data stored")
+
+	return nil
 }
+
 
 func (node *Node) Join(contact *Contact) (err error) {
 	fmt.Println("Joining the network")
@@ -149,4 +171,10 @@ func (node *Node) RefreshBuckets() {
 		contacts := node.LookupContact(NewContact(target, "", 0))
 		node.RoutingTable.UpdateRoutingTable(contacts)
 	}
+}
+
+// GenerateKey generates a unique key for the given data using SHA-256
+func GenerateKey(data []byte) *KademliaID {
+	hash := sha256.Sum256(data)
+	return NewKademliaID(hex.EncodeToString(hash[:]))
 }
