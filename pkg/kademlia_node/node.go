@@ -1,6 +1,8 @@
 package kademlia_node
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strconv"
@@ -15,14 +17,12 @@ type Node struct {
 	MessageHandler *MessageHandler
 	K              int
 	Alpha          int
-	B              int
 }
 
 // NewNode returns a new instance of a Node
 func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
 	alpha, _ := strconv.Atoi(os.Getenv("ALPHA"))
-	b, _ := strconv.Atoi(os.Getenv("B"))
 	data := map[KademliaID][]byte{}
 	ip := GetLocalIp("eth0")
 	port := GetRandomPortOrDefault()
@@ -41,7 +41,6 @@ func NewNode(id *KademliaID) *Node {
 		MessageHandler: messageHandler,
 		K:              k,
 		Alpha:          alpha,
-		B:              b,
 	}
 }
 
@@ -106,13 +105,37 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 	}
 }
 
-func (node *Node) LookupData(hash string) {
+func (node *Node) LookupData(hash string) (content []byte, source *Node, err error) {
 	// TODO
-
+	return nil, nil, nil
 }
 
-func (node *Node) Store(data []byte) {
-	// TODO
+func GenerateKey(data []byte) *KademliaID {
+	hash := sha256.Sum256(data)
+	return NewKademliaID(hex.EncodeToString(hash[:]))
+}
+
+func (node *Node) Store(data []byte) (key *KademliaID, err error) {
+
+	fmt.Println("Storing the data")
+	// Generate the key for the data (e.g., using a hash function)
+	key = GenerateKey(data)
+	target := &Contact{Id: key}
+
+	// Use LookupContact to find the k closest nodes to the key
+	closestContacts := node.LookupContact(target)
+
+	// Send STORE_REQUEST to each of the closest contacts
+	for _, contact := range closestContacts {
+		_, err := node.MessageHandler.SendStoreRequest(node.Me, contact, data)
+		if err != nil {
+			// Handle error (e.g., log it, retry, etc.)
+			fmt.Printf("Failed to store data on node %s: %v\n", contact.Id, err)
+		}
+	}
+	fmt.Println("Data stored")
+
+	return key, nil
 }
 
 func (node *Node) Ping(target *Contact) (err error) {
