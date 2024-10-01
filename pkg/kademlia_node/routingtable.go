@@ -22,7 +22,7 @@ func NewRoutingTable(node *Node) *RoutingTable {
 			Node: node}
 		routingTableInstance.Buckets = make([]*bucket, IDLength*8)
 		for i := 0; i < IDLength*8; i++ {
-			routingTableInstance.Buckets[i] = newBucket(node.K)
+			routingTableInstance.Buckets[i] = NewBucket(node.K)
 		}
 	})
 	return routingTableInstance
