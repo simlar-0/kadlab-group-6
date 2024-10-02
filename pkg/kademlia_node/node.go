@@ -10,7 +10,7 @@ import (
 type Node struct {
 	Me             *Contact
 	RoutingTable   *RoutingTable
-	Network        *Network
+	Network        NetworkInterface
 	MessageHandler *MessageHandler
 	K              int
 	Alpha          int
@@ -111,7 +111,6 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 
 func (node *Node) LookupData(hash string) {
 	// TODO
-
 }
 
 func (node *Node) Store(data []byte) {
