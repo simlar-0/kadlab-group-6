@@ -1,7 +1,6 @@
 package kademlia_node
 
 import (
-	"fmt"
 	"math/bits"
 	"sync"
 )
@@ -18,7 +17,7 @@ func NewRoutingTable(node *Node) *RoutingTable {
 		Node: node}
 	routingTable.Buckets = make([]*bucket, IDLength*8)
 	for i := 0; i < IDLength*8; i++ {
-		routingTable.Buckets[i] = newBucket(node.K)
+		routingTable.Buckets[i] = NewBucket(node.K)
 	}
 	return routingTable
 }

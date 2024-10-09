@@ -12,8 +12,8 @@ type bucket struct {
 	K    int
 }
 
-// newBucket returns a new instance of a bucket
-func newBucket(k int) *bucket {
+// NewBucket returns a new instance of a bucket
+func NewBucket(k int) *bucket {
 	bucket := &bucket{}
 	bucket.List = list.New()
 	bucket.K = k
