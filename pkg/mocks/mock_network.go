@@ -2,6 +2,7 @@ package mocks
 
 import (
 	kademlia "kadlab-group-6/pkg/kademlia_node"
+	"net"
 )
 
 type MockNetwork struct {
@@ -29,5 +30,9 @@ func (m *MockNetwork) GetSentMessages() []*kademlia.RPC {
 }
 
 func (m *MockNetwork) Listen() {
+	// Do nothing
+}
+
+func (m *MockNetwork) Write(*net.UDPConn, []byte, *net.UDPAddr) {
 	// Do nothing
 }

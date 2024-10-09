@@ -60,12 +60,11 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) (*RPC, error) {
 }
 
 func (handler *MessageHandler) SerializeMessage(rpc *RPC) (data []byte, err error) {
-	var serializedRPC []byte
-	serializedRPC, err = json.Marshal(rpc)
+	data, err = json.Marshal(rpc)
 	if err != nil {
 		return nil, err
 	}
-	return serializedRPC, nil
+	return data, nil
 }
 
 func (handler *MessageHandler) DeserializeMessage(data []byte) (*RPC, error) {

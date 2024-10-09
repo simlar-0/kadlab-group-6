@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"encoding/json"
 	"fmt"
 	kademlia "kadlab-group-6/pkg/kademlia_node"
 )
@@ -25,12 +26,21 @@ func (handler *MockMessageHandler) ProcessRequest(rpc *kademlia.RPC) (*kademlia.
 	return nil, nil
 }
 
-func (handler *MockMessageHandler) SerializeMessage(rpc *kademlia.RPC) ([]byte, error) {
-	return nil, nil
+func (handler *MockMessageHandler) SerializeMessage(rpc *kademlia.RPC) (data []byte, err error) {
+	data, err = json.Marshal(rpc)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (handler *MockMessageHandler) DeserializeMessage(data []byte) (*kademlia.RPC, error) {
-	return nil, nil
+	var rpc kademlia.RPC
+	err := json.Unmarshal(data, &rpc)
+	if err != nil {
+		return nil, err
+	}
+	return &rpc, nil
 }
 
 func (handler *MockMessageHandler) SendPingRequest(source *kademlia.Contact, destination *kademlia.Contact) (*kademlia.RPC, error) {
@@ -65,7 +75,7 @@ func (handler *MockMessageHandler) SendFindValueResponse(requestRPC *kademlia.RP
 	return nil
 }
 
-type MockMessageHandlerError struct{
+type MockMessageHandlerError struct {
 	Node *kademlia.Node
 }
 
