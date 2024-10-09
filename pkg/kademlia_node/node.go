@@ -11,7 +11,7 @@ type Node struct {
 	Me             *Contact
 	RoutingTable   *RoutingTable
 	Network        NetworkInterface
-	MessageHandler *MessageHandler
+	MessageHandler MessageInterface
 	K              int
 	Alpha          int
 }
@@ -141,7 +141,7 @@ func (node *Node) RefreshBuckets() {
 	// Get the closest neighbor
 	neighbor := node.RoutingTable.FindClosestContacts(node.Me.Id)[0]
 	// Get the bucket index of the neighbor
-	bucketIndex := node.RoutingTable.getBucketIndex(neighbor.Id)
+	bucketIndex := node.RoutingTable.GetBucketIndex(neighbor.Id)
 	// Refresh all buckets further away than the neighbor
 	for i := bucketIndex + 1; i < IDLength*8; i++ {
 		target := NewRandomKademliaIDInBucket(i, node.Me.Id)

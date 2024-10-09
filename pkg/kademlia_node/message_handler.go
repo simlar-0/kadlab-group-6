@@ -5,6 +5,20 @@ import (
 	"fmt"
 )
 
+type MessageInterface interface {
+	ProcessRequest(rpc *RPC) (*RPC, error)
+	SerializeMessage(rpc *RPC) ([]byte, error)
+	DeserializeMessage(data []byte) (*RPC, error)
+	SendPingRequest(source *Contact, destination *Contact) (*RPC, error)
+	SendPingResponse(requestRPC *RPC) *RPC
+	SendStoreRequest(source *Contact, destination *Contact, data []byte) (*RPC, error)
+	SendStoreResponse(requestRPC *RPC) *RPC
+	SendFindNodeRequest(source *Contact, destination *Contact, target *KademliaID) (*RPC, error)
+	SendFindNodeResponse(requestRPC *RPC) *RPC
+	SendFindValueRequest(source *Contact, destination *Contact, key *KademliaID) (*RPC, error)
+	SendFindValueResponse(requestRPC *RPC) *RPC
+}
+
 type MessageHandler struct {
 	Node *Node
 }
