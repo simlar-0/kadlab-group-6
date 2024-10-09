@@ -62,7 +62,7 @@ func TestLess(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
+func TestStringContact(t *testing.T) {
 	id := kademlia.NewKademliaID("0000000000000000000000000000000000000001")
 	contact := kademlia.NewContact(id, "127.0.0.1", 8080)
 	expectedString := `contact(Id: "0000000000000000000000000000000000000001", Address: "127.0.0.1":"8080", Distance: "<nil>")`

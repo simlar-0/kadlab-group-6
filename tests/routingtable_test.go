@@ -41,7 +41,7 @@ func TestNewRoutingTable(t *testing.T) {
 	}
 }
 
-func TestAddContact(t *testing.T) {
+func TestAddContactRT(t *testing.T) {
 	node := initNodeRT()
 
 	contact := &kademlia.Contact{

@@ -20,7 +20,7 @@ func TestNewBucket(t *testing.T) {
 	}
 }
 
-func TestAddContact(t *testing.T) {
+func TestAddContactBucket(t *testing.T) {
 	k := 20
 	b := kademlia.NewBucket(k)
 	contact := kademlia.NewContact(kademlia.NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 8080)
@@ -72,7 +72,7 @@ func TestAddContactToFullBucket(t *testing.T) {
 	bucket.PrintBucket()
 }
 
-func TestRemoveContact(t *testing.T) {
+func TestRemoveContactBucket(t *testing.T) {
 	k := 20
 	b := kademlia.NewBucket(k)
 	contact := kademlia.NewContact(kademlia.NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 8080)
@@ -98,7 +98,7 @@ func TestGetContactAndCalcDistance(t *testing.T) {
 	}
 }
 
-func TestLen(t *testing.T) {
+func TestLenBucket(t *testing.T) {
 	k := 20
 	b := kademlia.NewBucket(k)
 	if b.Len() != 0 {

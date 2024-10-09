@@ -303,7 +303,7 @@ func TestContains(t *testing.T) {
 	}
 }
 
-func TestString(t *testing.T) {
+func TestStringSL(t *testing.T) {
 	target := kademlia.NewKademliaID("0000000000000000000000000000000000000000")
 	k := 3
 	sl := kademlia.NewShortlist(target, k)
@@ -320,7 +320,7 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestLen(t *testing.T) {
+func TestLenSL(t *testing.T) {
 	target := kademlia.NewKademliaID("0000000000000000000000000000000000000000")
 	k := 3
 	sl := kademlia.NewShortlist(target, k)
