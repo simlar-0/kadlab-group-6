@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	kademlia "kadlab-group-6/pkg/kademlia_node"
 	"testing"
 )
@@ -31,6 +32,44 @@ func TestAddContact(t *testing.T) {
 	if b.Len() != 1 {
 		t.Errorf("Expected bucket length to remain 1 after adding the same contact, got %d", b.Len())
 	}
+}
+
+func TestAddContactToFullBucket(t *testing.T) {
+	k := 20
+	bucket := kademlia.NewBucket(k)
+
+	counter := 0
+	for i := 0; i < 21; i++ {
+		// string formatting to get leading zeros
+		s := fmt.Sprintf("%040d", i)
+		contact := &kademlia.Contact{
+			Id: kademlia.NewKademliaID(s)}
+		bucket.AddContact(*contact)
+		counter++
+	}
+
+	t.Logf("Tried adding %d contacts to bucket", counter)
+
+	if bucket.Len() != k {
+		t.Errorf("Expected bucket to be full (20), got %d", bucket.Len())
+	}
+
+	// Add already existing contact
+	contact := &kademlia.Contact{Id: kademlia.NewKademliaID("0000000000000000000000000000000000000000")}
+	bucket.AddContact(*contact)
+
+	if bucket.Len() != k {
+		t.Errorf("Expected bucket to remain full (20) after adding the same contact, got %d", bucket.Len())
+	}
+
+	// Least recently seen contact should be the second one added since the first
+	// has been moved to the front
+	expectedLeastRecentId := kademlia.NewKademliaID("0000000000000000000000000000000000000001")
+	actualLeastRecentId := bucket.GetLeastRecentlySeenContact().Id
+	if !actualLeastRecentId.Equals(expectedLeastRecentId) {
+		t.Errorf("Expected least recently seen contact to be %s, got %s", expectedLeastRecentId.String(), actualLeastRecentId.String())
+	}
+	bucket.PrintBucket()
 }
 
 func TestRemoveContact(t *testing.T) {
