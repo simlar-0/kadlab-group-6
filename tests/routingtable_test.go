@@ -220,3 +220,27 @@ func TestUpdateRoutingTable(t *testing.T) {
 		t.Errorf("Expected contact2 %v to be in bucket, but it was not found", contact2)
 	}
 }
+
+func TestGetBucketIndex(t *testing.T) {
+	// Initialize a node and its routing table
+	node := initNodeRT()
+
+	// Test cases
+	tests := []struct {
+		id       *kademlia.KademliaID
+		expected int
+	}{
+		{kademlia.NewKademliaID("0000000000000000000000000000000000000001"), 0},
+		{kademlia.NewKademliaID("8000000000000000000000000000000000000000"), 159},
+		{kademlia.NewKademliaID("4000000000000000000000000000000000000000"), 158},
+		{kademlia.NewKademliaID("2000000000000000000000000000000000000000"), 157},
+		{kademlia.NewKademliaID("1000000000000000000000000000000000000000"), 156},
+	}
+
+	for _, test := range tests {
+		index := node.RoutingTable.GetBucketIndex(test.id)
+		if index != test.expected {
+			t.Errorf("GetBucketIndex(%v) = %d; want %d", test.id, index, test.expected)
+		}
+	}
+}

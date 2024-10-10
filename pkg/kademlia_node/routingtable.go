@@ -56,6 +56,11 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID) []*Con
 
 	var candidates ContactCandidates
 	bucketIndex := routingTable.GetBucketIndex(target)
+
+	// If the target is the node itself, start from the first bucket
+	if bucketIndex == -1 {
+		bucketIndex = 0
+	}
 	bucket := routingTable.Buckets[bucketIndex]
 
 	candidates.Append(bucket.GetContactAndCalcDistance(target))
