@@ -11,11 +11,6 @@ type RoutingTable struct {
 	Mutex   sync.RWMutex
 }
 
-var (
-	routingTableInstance *RoutingTable
-	routingSingleton     sync.Once
-)
-
 // NewRoutingTable returns a new instance of a RoutingTable
 func NewRoutingTable(node *Node) *RoutingTable {
 	routingTable := &RoutingTable{
