@@ -11,7 +11,7 @@ type Node struct {
 	Me             *Contact
 	RoutingTable   *RoutingTable
 	Network        NetworkInterface
-	MessageHandler MessageInterface
+	MessageHandler MessageHandlerInterface
 	K              int
 	Alpha          int
 }

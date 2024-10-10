@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type MessageInterface interface {
+type MessageHandlerInterface interface {
 	ProcessRequest(rpc *RPC) (*RPC, error)
 	SerializeMessage(rpc *RPC) ([]byte, error)
 	DeserializeMessage(data []byte) (*RPC, error)
