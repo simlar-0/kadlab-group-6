@@ -33,11 +33,11 @@ const (
 	FindValueResponse RPCType = "FIND_VALUE_RESPONSE"
 )
 
-func newPayload(Key *KademliaID, Data []byte, Contacts []*Contact) *Payload {
+func NewPayload(Key *KademliaID, Data []byte, Contacts []*Contact) *Payload {
 	return &Payload{Key: Key, Data: Data, Contacts: Contacts}
 }
 
-func newRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Source *Contact, Destination *Contact) *RPC {
+func NewRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Source *Contact, Destination *Contact) *RPC {
 	return &RPC{Type: Type, IsResponse: IsResponse, ID: ID, Payload: Payload, Source: Source, Destination: Destination}
 }
 

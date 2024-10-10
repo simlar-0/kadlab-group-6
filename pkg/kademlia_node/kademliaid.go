@@ -18,6 +18,10 @@ func NewKademliaID(data string) *KademliaID {
 
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
+		if i >= len(decoded) {
+			newKademliaID[i] = 0
+			continue
+		}
 		newKademliaID[i] = decoded[i]
 	}
 

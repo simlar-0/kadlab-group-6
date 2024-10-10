@@ -28,8 +28,9 @@ func (shortlist *shortlist) AddContact(contact *Contact) {
 	if !shortlist.Contains(contact) {
 		contact.CalcDistance(shortlist.Target)
 		shortlist.Contacts.PushBack(contact)
+		shortlist.Sort()
 		if shortlist.Contacts.Len() > shortlist.K {
-			shortlist.Sort()
+			// Removes the furthest away contact
 			shortlist.Contacts.Remove(shortlist.Contacts.Back())
 		}
 	}
@@ -66,7 +67,7 @@ func (shortlist *shortlist) GetClosestContactsNotContacted(k int, contacted map[
 	var contacts []*Contact
 	for elt := shortlist.Contacts.Front(); elt != nil; elt = elt.Next() {
 		contact := elt.Value.(*Contact)
-		if _, ok := contacted[contact.Id]; !ok {
+		if !contacted[contact.Id] {
 			contacts = append(contacts, contact)
 			if len(contacts) == k {
 				break
@@ -97,19 +98,12 @@ func (shortlist *shortlist) GetClosestContact() *Contact {
 	return shortlist.Contacts.Front().Value.(*Contact)
 }
 
-// TrimToK trims the shortlist to length k
-func (shortlist *shortlist) TrimToK() {
-	for shortlist.Contacts.Len() > shortlist.K {
-		shortlist.Contacts.Remove(shortlist.Contacts.Back())
-	}
-}
-
 // CheckIfAllContacted checks each contact in the shortlist against a map of contacted contacts
 // and is of length k
 func (shortlist *shortlist) AllContacted(contacted map[*KademliaID]bool) bool {
 	for elt := shortlist.Contacts.Front(); elt != nil; elt = elt.Next() {
 		contact := elt.Value.(*Contact)
-		if _, ok := contacted[contact.Id]; !ok {
+		if !contacted[contact.Id] {
 			return false
 		}
 	}
