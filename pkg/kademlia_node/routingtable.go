@@ -11,6 +11,11 @@ type RoutingTable struct {
 	Mutex   sync.RWMutex
 }
 
+var (
+	routingTableInstance *RoutingTable
+	routingSingleton     sync.Once
+)
+
 // NewRoutingTable returns a new instance of a RoutingTable
 func NewRoutingTable(node *Node) *RoutingTable {
 	routingTable := &RoutingTable{
@@ -80,6 +85,7 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID) []*Con
 
 	return candidates.GetContacts(candidates.Len())
 }
+
 
 // GetBucketIndex get the correct Bucket index for the KademliaID
 func (routingTable *RoutingTable) GetBucketIndex(id *KademliaID) int {

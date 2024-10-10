@@ -40,7 +40,6 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) (*RPC, error) {
 
 	switch rpc.Type {
 	case PingRequest:
-		fmt.Println("Received PingRequest")
 		rpc := handler.SendPingResponse(rpc)
 		return rpc, nil
 	case StoreRequest:
