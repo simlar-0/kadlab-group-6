@@ -74,7 +74,7 @@ func (network *Network) Listen() {
 	// Create Alpha number of response goroutines
 	for i := 0; i < NumberOfWorkers; i++ {
 		network.Wg.Add(1)
-		go network.responseWorker(listener)
+		go network.ResponseWorker(listener)
 	}
 	// WaitGroup to keep the goroutines alive
 	network.Wg.Wait()
@@ -116,8 +116,8 @@ func (network *Network) read(listener *net.UDPConn) {
 	}
 }
 
-// responseWorker sends responses to the destination nodes
-func (network *Network) responseWorker(listener *net.UDPConn) {
+// ResponseWorker sends responses to the destination nodes
+func (network *Network) ResponseWorker(listener *net.UDPConn) {
 	defer network.Wg.Done()
 	for rpc := range network.ResponseQueue {
 		// Serialize the message

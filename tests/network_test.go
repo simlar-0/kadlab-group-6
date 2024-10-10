@@ -89,6 +89,46 @@ func TestGetRandomPortOrDefault(t *testing.T) {
 	}
 }
 
+func TestResponseWorker(t *testing.T) {
+	node := initNodeNetwork()
+	network := kademlia.NewNetwork(node)
+
+	// Create a mock UDP listener
+	addr, _ := net.ResolveUDPAddr("udp", "127.0.0.1:0")
+	conn, _ := net.ListenUDP("udp", addr)
+	defer conn.Close()
+
+	// Create an RPC message and add it to the ResponseQueue
+	rpc := &kademlia.RPC{
+		ID:          kademlia.NewRandomKademliaID(),
+		Destination: kademlia.NewContact(kademlia.NewRandomKademliaID(), "127.0.0.1", conn.LocalAddr().(*net.UDPAddr).Port),
+	}
+	network.ResponseQueue <- rpc
+
+	// Run the responseWorker in a separate goroutine
+	go network.ResponseWorker(conn)
+
+	// Wait for the responseWorker to process the queue
+	time.Sleep(1 * time.Second)
+
+	// Verify the results
+	buf := make([]byte, 1024)
+	n, _, err := conn.ReadFromUDP(buf)
+	if err != nil {
+		t.Fatalf("Expected to read from UDP, got error: %v", err)
+	}
+
+	// Deserialize the received message
+	receivedRpc, err := network.Node.MessageHandler.DeserializeMessage(buf[:n])
+	if err != nil {
+		t.Fatalf("Expected to deserialize message, got error: %v", err)
+	}
+
+	if !receivedRpc.ID.Equals(rpc.ID) {
+		t.Errorf("Expected RPC ID %v, got %v", rpc.ID, receivedRpc.ID)
+	}
+}
+
 func TestListen(t *testing.T) {
 	node := initNodeNetwork()
 	go node.Network.Listen()
