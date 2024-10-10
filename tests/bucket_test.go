@@ -89,7 +89,7 @@ func TestGetContactAndCalcDistance(t *testing.T) {
 	target := kademlia.NewKademliaID("0000000000000000000000000000000000000000")
 	contact := kademlia.NewContact(kademlia.NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 8080)
 	b.AddContact(*contact)
-	contacts := b.GetContactAndCalcDistance(target)
+	contacts := b.GetContactsAndCalcDistance(target)
 	if len(contacts) != 1 {
 		t.Errorf("Expected 1 contact, got %d", len(contacts))
 	}

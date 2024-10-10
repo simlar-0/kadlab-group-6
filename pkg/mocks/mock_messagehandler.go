@@ -60,7 +60,11 @@ func (handler *MockMessageHandler) SendStoreResponse(requestRPC *kademlia.RPC) *
 }
 
 func (handler *MockMessageHandler) SendFindNodeRequest(source *kademlia.Contact, destination *kademlia.Contact, target *kademlia.KademliaID) (*kademlia.RPC, error) {
-	return nil, nil
+	rpc := kademlia.NewRPC(kademlia.FindNodeRequest, false, kademlia.NewRandomKademliaID(), kademlia.NewPayload(target, nil, nil), source, destination)
+	contacts := []kademlia.Contact{*destination}
+	contactPtrs := convertToPointerSlice(contacts)
+	response := kademlia.NewRPC(kademlia.FindNodeResponse, true, rpc.ID, kademlia.NewPayload(nil, nil, contactPtrs), destination, source)
+	return response, nil
 }
 
 func (handler *MockMessageHandler) SendFindNodeResponse(requestRPC *kademlia.RPC) *kademlia.RPC {
@@ -125,4 +129,13 @@ func (handler *MockMessageHandlerError) SendFindValueRequest(source *kademlia.Co
 
 func (handler *MockMessageHandlerError) SendFindValueResponse(requestRPC *kademlia.RPC) *kademlia.RPC {
 	return nil
+}
+
+// Helper function to convert []Contact to []*Contact
+func convertToPointerSlice(contacts []kademlia.Contact) []*kademlia.Contact {
+	contactPtrs := make([]*kademlia.Contact, len(contacts))
+	for i := range contacts {
+		contactPtrs[i] = &contacts[i]
+	}
+	return contactPtrs
 }

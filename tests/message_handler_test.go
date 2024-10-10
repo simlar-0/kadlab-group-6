@@ -16,7 +16,7 @@ func initNode() *kademlia.Node {
 	}
 	node.RoutingTable = kademlia.NewRoutingTable(node)
 	node.MessageHandler = kademlia.NewMessageHandler(node)
-	node.Network = mocks.NewMockNetwork()
+	node.Network = mocks.NewMockNetwork(node)
 
 	return node
 }
