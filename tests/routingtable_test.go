@@ -16,7 +16,7 @@ func initNodeRT() *kademlia.Node {
 	}
 	node.RoutingTable = kademlia.NewRoutingTable(node)
 	node.MessageHandler = kademlia.NewMessageHandler(node)
-	node.Network = mocks.NewMockNetwork()
+	node.Network = mocks.NewMockNetwork(node)
 
 	return node
 }
@@ -53,7 +53,7 @@ func TestAddContactRT(t *testing.T) {
 	bucketIndex := node.RoutingTable.GetBucketIndex(contact.Id)
 	bucket := node.RoutingTable.Buckets[bucketIndex]
 
-	contacts := bucket.GetContactAndCalcDistance(node.Me.Id)
+	contacts := bucket.GetContactsAndCalcDistance(node.Me.Id)
 	found := false
 	for _, c := range contacts {
 		if c.Id.Equals(contact.Id) {
@@ -196,7 +196,7 @@ func TestUpdateRoutingTable(t *testing.T) {
 	bucketIndex2 := node.RoutingTable.GetBucketIndex(contact2.Id)
 	bucket2 := node.RoutingTable.Buckets[bucketIndex2]
 
-	contacts1 := bucket1.GetContactAndCalcDistance(node.Me.Id)
+	contacts1 := bucket1.GetContactsAndCalcDistance(node.Me.Id)
 	found1 := false
 	for _, c := range contacts1 {
 		if c.Id.Equals(contact1.Id) {
@@ -208,7 +208,7 @@ func TestUpdateRoutingTable(t *testing.T) {
 		t.Errorf("Expected contact1 %v to be in bucket, but it was not found", contact1)
 	}
 
-	contacts2 := bucket2.GetContactAndCalcDistance(node.Me.Id)
+	contacts2 := bucket2.GetContactsAndCalcDistance(node.Me.Id)
 	found2 := false
 	for _, c := range contacts2 {
 		if c.Id.Equals(contact2.Id) {

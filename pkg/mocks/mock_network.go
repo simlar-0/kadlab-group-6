@@ -7,11 +7,13 @@ import (
 
 type MockNetwork struct {
 	sentMessages []*kademlia.RPC
+	Node         *kademlia.Node
 }
 
-func NewMockNetwork() *MockNetwork {
+func NewMockNetwork(node *kademlia.Node) *MockNetwork {
 	return &MockNetwork{
 		sentMessages: []*kademlia.RPC{},
+		Node:         node,
 	}
 }
 

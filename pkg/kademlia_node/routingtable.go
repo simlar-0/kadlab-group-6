@@ -56,18 +56,23 @@ func (routingTable *RoutingTable) FindClosestContacts(target *KademliaID) []*Con
 
 	var candidates ContactCandidates
 	bucketIndex := routingTable.GetBucketIndex(target)
+
+	// If the target is the node itself, start from the first bucket
+	if bucketIndex == -1 {
+		bucketIndex = 0
+	}
 	bucket := routingTable.Buckets[bucketIndex]
 
-	candidates.Append(bucket.GetContactAndCalcDistance(target))
+	candidates.Append(bucket.GetContactsAndCalcDistance(target))
 
 	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < IDLength*8) && candidates.Len() < routingTable.Node.K; i++ {
 		if bucketIndex-i >= 0 {
 			bucket = routingTable.Buckets[bucketIndex-i]
-			candidates.Append(bucket.GetContactAndCalcDistance(target))
+			candidates.Append(bucket.GetContactsAndCalcDistance(target))
 		}
 		if bucketIndex+i < IDLength*8 {
 			bucket = routingTable.Buckets[bucketIndex+i]
-			candidates.Append(bucket.GetContactAndCalcDistance(target))
+			candidates.Append(bucket.GetContactsAndCalcDistance(target))
 		}
 	}
 
