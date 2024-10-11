@@ -19,6 +19,11 @@ type Node struct {
 	Alpha          int
 }
 
+type NodeCommunication interface {
+	Store(data []byte) (key *KademliaID, err error)
+	LookupData(hash string) (content []byte, source *Node, err error)
+}
+
 // NewNode returns a new instance of a Node
 func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))

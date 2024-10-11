@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	getopt "github.com/pborman/getopt/v2"
 )
 
 var (
@@ -19,7 +21,11 @@ var (
 )
 
 func main() {
-	// Create a new node
+
+	optCli := getopt.Bool('c', "Cli")
+	getopt.Parse()
+
+	//Create a new node
 	fmt.Println("Creating a new node")
 	var id *kademlia.KademliaID
 	if !isBootstrapNode {
@@ -28,6 +34,11 @@ func main() {
 		id = kademlia.NewKademliaID(BootstrapNodeId)
 	}
 	node := kademlia.NewNode(id)
+
+	if *optCli {
+		c := kademlia.CliInit(node)
+		go c.Main()
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(1) // Add a counter to the WaitGroup
@@ -48,4 +59,5 @@ func main() {
 		go node.Network.Listen()
 	}
 	wg.Wait() // Wait for all goroutines to finish
+
 }
