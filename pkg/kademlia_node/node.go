@@ -1,16 +1,17 @@
 package kademlia_node
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"strconv"
 	"sync"
-	"crypto/sha256"
-	"encoding/hex"
 )
 
 type Node struct {
 	Me             *Contact
+	data           map[KademliaID][]byte
 	RoutingTable   *RoutingTable
 	Network        *Network
 	MessageHandler *MessageHandler
@@ -18,25 +19,34 @@ type Node struct {
 	Alpha          int
 }
 
+type NodeCommunication interface {
+	Store(data []byte) (key *KademliaID, err error)
+	LookupData(hash string) (content []byte, source *Node, err error)
+}
+
 // NewNode returns a new instance of a Node
 func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
 	alpha, _ := strconv.Atoi(os.Getenv("ALPHA"))
+	data := map[KademliaID][]byte{}
 	ip := GetLocalIp("eth0")
 	port := GetRandomPortOrDefault()
 	me := NewContact(id, ip, port)
-
-	node := &Node{
-		Me:    me,
-		K:     k,
-		Alpha: alpha,
-	}
-
-	node.RoutingTable = NewRoutingTable(node)
-	node.MessageHandler = NewMessageHandler(node, node.Network)
-	node.Network = NewNetwork(node)
+	routingTable := NewRoutingTable(me, k)
+	messageHandler := NewMessageHandler(routingTable)
+	network := NewNetwork(me)
+	network.MessageHandler = messageHandler
+	messageHandler.Network = network
 	fmt.Println("Node created with ID: ", id)
-	return node
+	return &Node{
+		Me:             me,
+		data:           data,
+		RoutingTable:   routingTable,
+		Network:        network,
+		MessageHandler: messageHandler,
+		K:              k,
+		Alpha:          alpha,
+	}
 }
 
 func (node *Node) LookupContact(target *Contact) []*Contact {
@@ -50,8 +60,6 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 	for _, contact := range initialContacts {
 		shortlist.AddContact(contact)
 	}
-
-	closestContact := shortlist.GetClosestContact()
 
 	for {
 		// Get the alpha closest contacts from the shortlist not contacted
@@ -80,11 +88,9 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 				responseChannel <- contacts.Payload.Contacts
 			}(contact)
 		}
-		// Wait for all goroutines to finish
-		go func() {
-			wg.Wait()
-			close(responseChannel)
-		}()
+
+		wg.Wait()
+		close(responseChannel)
 
 		// Process responses
 		for contacts := range responseChannel {
@@ -98,29 +104,83 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 
 		// Check if all the contacts in the shortlist have been contacted
 		// or if the target is in the shortlist
-		// or if the closest contact has not changed
-		newClosestContact := shortlist.GetClosestContact()
-		if newClosestContact == nil {
-			return shortlist.GetClosestContacts(shortlist.Len())
+		if shortlist.AllContacted(contacted) || shortlist.Contains(target) {
+			return shortlist.GetClosestContacts(node.K)
 		}
-
-		if shortlist.AllContacted(contacted) || shortlist.Contains(target) || closestContact.Id.Equals(newClosestContact.Id) {
-			return shortlist.GetClosestContacts(shortlist.Len())
-		}
-		closestContact = newClosestContact
 	}
 }
-
-func (node *Node) LookupData(hash string) {
+/*
+func (node *Node) LookupData(hash string) (content []byte, source *Node, err error) {
 	// TODO
+	return nil, nil, nil
+}
+*/
+func (node *Node) LookupData(hash string) (content []byte, source *Node, err error) {
+	targetID := NewKademliaID(hash)
+	shortlist := NewShortlist(targetID, node.K)
+	contacted := make(map[*KademliaID]bool)
+  
+	initialContacts := node.RoutingTable.FindClosestContacts(targetID)
+	for _, contact := range initialContacts {
+	  shortlist.AddContact(contact)
+	}
+  
+	for {
+		alphaClosest := shortlist.GetClosestContactsNotContacted(node.Alpha, contacted)
+		responseChannel := make(chan *RPC, len(alphaClosest))
+		var wg sync.WaitGroup
 	
+		if len(alphaClosest) == 0 {
+			return nil, nil, fmt.Errorf("Data not found")
+		}
+	
+		for _, contact := range alphaClosest {
+			contacted[contact.Id] = true
+			wg.Add(1)
+			go func(c *Contact) {
+			defer wg.Done()
+			rpc, err := node.MessageHandler.SendFindValueRequest(node.Me, c, targetID)
+			if err != nil {
+				shortlist.RemoveContact(c)
+				return
+			}
+			responseChannel <- rpc
+			}(contact)
+		}
+
+		wg.Wait()
+		close(responseChannel)
+
+		for rpc := range responseChannel {
+			if rpc.Payload.Data != nil {
+				// how to return the node?
+				return rpc.Payload.Data, rpc.Node, nil // return rpc.Payload.Data, rpc.Source, nil
+			}
+			for _, contact := range rpc.Payload.Contacts {
+				if !contact.Id.Equals(node.Me.Id) {
+					shortlist.AddContact(contact)
+				}
+			}
+		}
+	
+		newClosestContacts := shortlist.GetClosestContacts(node.K)
+		if len(newClosestContacts) == 0 || shortlist.AllContacted(contacted) {
+			return nil, nil, fmt.Errorf("Data not found")
+		}
+	}
+}
+   
+
+func GenerateKey(data []byte) *KademliaID {
+	hash := sha256.Sum256(data)
+	return NewKademliaID(hex.EncodeToString(hash[:]))
 }
 
-func (node *Node) Store(data []byte) (err error) {
-	// TODO
+func (node *Node) Store(data []byte) (key *KademliaID, err error) {
+
 	fmt.Println("Storing the data")
 	// Generate the key for the data (e.g., using a hash function)
-	key := GenerateKey(data)
+	key = GenerateKey(data)
 	target := &Contact{Id: key}
 
 	// Use LookupContact to find the k closest nodes to the key
@@ -136,45 +196,28 @@ func (node *Node) Store(data []byte) (err error) {
 	}
 	fmt.Println("Data stored")
 
-	return nil
+	return key, nil
 }
 
-
-func (node *Node) Join(contact *Contact) (err error) {
-	fmt.Println("Joining the network")
-	// Ping the contact to see if it is alive
-	_, e := node.MessageHandler.SendPingRequest(node.Me, contact)
+func (node *Node) Ping(target *Contact) (err error) {
+	_, e := node.MessageHandler.SendPingRequest(node.Me, target)
 	if e != nil {
 		return e
 	}
-	// Add the contact to the routing table
-	node.RoutingTable.AddContact(contact)
-	// Perform a lookupNode on myself
-	contacts := node.LookupContact(node.Me)
-	// Update the routing table with the results
-	node.RoutingTable.UpdateRoutingTable(contacts)
-	// Refresh all buckets further away than the closest neighbor
-	node.RefreshBuckets()
-	fmt.Println("Joined the network")
+	node.RoutingTable.AddContact(target)
 	return nil
 }
 
-// RefreshBuckets refreshes all buckets further away than the closest neighbor
-func (node *Node) RefreshBuckets() {
-	// Get the closest neighbor
-	neighbor := node.RoutingTable.FindClosestContacts(node.Me.Id)[0]
-	// Get the bucket index of the neighbor
-	bucketIndex := node.RoutingTable.getBucketIndex(neighbor.Id)
-	// Refresh all buckets further away than the neighbor
-	for i := bucketIndex + 1; i < IDLength*8; i++ {
-		target := NewRandomKademliaIDInBucket(i, node.Me.Id)
-		contacts := node.LookupContact(NewContact(target, "", 0))
-		node.RoutingTable.UpdateRoutingTable(contacts)
-	}
-}
+func (node *Node) Join(contact *Contact) (err error) {
+	fmt.Println("Joining the network")
 
-// GenerateKey generates a unique key for the given data using SHA-256
-func GenerateKey(data []byte) *KademliaID {
-	hash := sha256.Sum256(data)
-	return NewKademliaID(hex.EncodeToString(hash[:]))
+	node.Ping(contact)
+	// Perform a lookupNode on myself
+	contacts := node.LookupContact(node.Me)
+	fmt.Println("Lookup complete: ", contacts)
+	// Update the routing table with the results
+	node.RoutingTable.UpdateRoutingTable(contacts)
+	// Refresh all buckets further away than the closest neighbor
+	//node.routingTable.Refresh(contact.id)
+	return nil
 }
