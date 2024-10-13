@@ -116,16 +116,19 @@ func (node *Node) LookupData(hash string) (content []byte, source *Node, err err
 }
 */
 func (node *Node) LookupData(hash string) (content []byte, source *Node, err error) {
+	// first part similar to LookupContact
 	targetID := NewKademliaID(hash)
 	shortlist := NewShortlist(targetID, node.K)
 	contacted := make(map[*KademliaID]bool)
   
+	// get the initial k closest contacts to the destination
 	initialContacts := node.RoutingTable.FindClosestContacts(targetID)
 	for _, contact := range initialContacts {
 	  shortlist.AddContact(contact)
 	}
   
 	for {
+		// Get the alpha closest contacts from the shortlist not contacted
 		alphaClosest := shortlist.GetClosestContactsNotContacted(node.Alpha, contacted)
 		responseChannel := make(chan *RPC, len(alphaClosest))
 		var wg sync.WaitGroup
@@ -134,6 +137,7 @@ func (node *Node) LookupData(hash string) (content []byte, source *Node, err err
 			return nil, nil, fmt.Errorf("Data not found")
 		}
 	
+		// Send asynchronous FindNode requests to the alpha closest (not contacted) contacts in the shortlist
 		for _, contact := range alphaClosest {
 			contacted[contact.Id] = true
 			wg.Add(1)
@@ -141,9 +145,11 @@ func (node *Node) LookupData(hash string) (content []byte, source *Node, err err
 			defer wg.Done()
 			rpc, err := node.MessageHandler.SendFindValueRequest(node.Me, c, targetID)
 			if err != nil {
+				// Dead contacts are removed from the shortlist
 				shortlist.RemoveContact(c)
 				return
 			}
+			// Add the k closest contacts from the response to the shortlist
 			responseChannel <- rpc
 			}(contact)
 		}
@@ -151,10 +157,11 @@ func (node *Node) LookupData(hash string) (content []byte, source *Node, err err
 		wg.Wait()
 		close(responseChannel)
 
+		// Process responses
 		for rpc := range responseChannel {
 			if rpc.Payload.Data != nil {
 				// how to return the node?
-				return rpc.Payload.Data, rpc.Node, nil // return rpc.Payload.Data, rpc.Source, nil
+				return rpc.Payload.Data, nil, nil // return rpc.Payload.Data, rpc.Source, nil
 			}
 			for _, contact := range rpc.Payload.Contacts {
 				if !contact.Id.Equals(node.Me.Id) {
