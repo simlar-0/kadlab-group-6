@@ -16,6 +16,14 @@ var (
 	NumberOfWorkers = 10              // Number of response workers
 )
 
+// NetworkInterface is an interface for sending and receiving messages
+type NetworkInterface interface {
+	SendRequest(rpc *RPC) (*RPC, error)
+	SendResponse(rpc *RPC)
+	Listen()
+	Write(listener *net.UDPConn, serializedMessage []byte, addrPort *net.UDPAddr)
+}
+
 type Network struct {
 	Node          *Node
 	Wg            sync.WaitGroup
@@ -66,7 +74,7 @@ func (network *Network) Listen() {
 	// Create Alpha number of response goroutines
 	for i := 0; i < NumberOfWorkers; i++ {
 		network.Wg.Add(1)
-		go network.responseWorker(listener)
+		go network.ResponseWorker(listener)
 	}
 	// WaitGroup to keep the goroutines alive
 	network.Wg.Wait()
@@ -91,8 +99,7 @@ func (network *Network) read(listener *net.UDPConn) {
 			fmt.Println("Error deserializing message:", err)
 			continue
 		}
-		fmt.Println("Received message with RPC ID:", rpc.ID)
-		fmt.Println("From address: ", rpc.Source.Ip, rpc.Source.Port)
+		fmt.Println("Received message:", rpc)
 
 		// Check if the message is a response to a request
 		reqID := rpc.ID.String()
@@ -109,8 +116,8 @@ func (network *Network) read(listener *net.UDPConn) {
 	}
 }
 
-// responseWorker sends responses to the destination nodes
-func (network *Network) responseWorker(listener *net.UDPConn) {
+// ResponseWorker sends responses to the destination nodes
+func (network *Network) ResponseWorker(listener *net.UDPConn) {
 	defer network.Wg.Done()
 	for rpc := range network.ResponseQueue {
 		// Serialize the message
@@ -126,12 +133,9 @@ func (network *Network) responseWorker(listener *net.UDPConn) {
 			continue
 		}
 
-		fmt.Println("Sending response: ", rpc)
 		network.Write(listener, serializedMessage, addrPort)
 
 		fmt.Println("Sent response with RPC ID: ", rpc.ID)
-		fmt.Println("To address: ", addrPort)
-		fmt.Println("Size of response: ", len(serializedMessage))
 	}
 }
 
@@ -196,16 +200,14 @@ func (network *Network) SendRequest(rpc *RPC) (*RPC, error) {
 		fmt.Println("Error writing to UDP connection:", err)
 		return &RPC{}, err
 	}
-	fmt.Println("Sent request with RPC ID: ", rpc.ID)
-	fmt.Println("To address: ", addr)
-	fmt.Println("Request: ", rpc)
+
+	fmt.Println("Sent Request: ", rpc)
 
 	fmt.Println("Waiting for response to RPC ID: ", rpc.ID)
 	// Wait for response or timeout
 	select {
 	case response := <-recievedResponse:
-		fmt.Println("Received response to RPC ID: ", rpc.ID)
-		fmt.Println("Response: ", response)
+		fmt.Println("Received Response: ", response)
 		return response, nil
 	case <-time.After(Timeout):
 		fmt.Println("Timeout waiting for response to RPC ID: ", rpc.ID)
@@ -253,6 +255,5 @@ func GetLocalIp(interfaceName string) string {
 			}
 		}
 	}
-
 	return "127.0.0.1"
 }
