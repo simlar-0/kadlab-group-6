@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	getopt "github.com/pborman/getopt/v2"
 )
 
 var (
@@ -19,6 +21,12 @@ var (
 )
 
 func main() {
+
+	fmt.Println("Bootstrap informations:", BootstrapNodeAddress, BootstrapNodeId)
+
+	optCli := getopt.Bool('c', "Cli")
+	getopt.Parse()
+
 	// Create a new node
 	fmt.Println("Creating a new node")
 	var wg sync.WaitGroup
@@ -33,6 +41,12 @@ func main() {
 		node := kademlia.NewNode(kademlia.NewRandomKademliaID())
 		go node.Network.Listen()
 		go node.Join(bootstrapNode)
+
+		if *optCli {
+			c := kademlia.CliInit(node)
+			go c.Main()
+		}
+
 		fmt.Println("Node id: ", node.Me.Id)
 	} else {
 		node := kademlia.NewNode(kademlia.NewKademliaID(BootstrapNodeId))
