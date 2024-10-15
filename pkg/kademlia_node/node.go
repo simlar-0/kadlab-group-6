@@ -28,11 +28,13 @@ type NodeCommunication interface {
 func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
 	alpha, _ := strconv.Atoi(os.Getenv("ALPHA"))
+	data := make(map[KademliaID][]byte)
 	ip := GetLocalIp("eth0")
 	port := GetRandomPortOrDefault()
 	me := NewContact(id, ip, port)
 
 	node := &Node{
+		data:  data,
 		Me:    me,
 		K:     k,
 		Alpha: alpha,
@@ -196,16 +198,17 @@ func (node *Node) Store(data []byte) (key *KademliaID, err error) {
 	for _, contact := range closestContacts {
 		if node.Me.Id.Equals(contact.Id) {
 			node.data[*key] = data
-			fmt.Printf("Data stored in node %s", contact.Ip)
-		}
-		_, err := node.MessageHandler.SendStoreRequest(node.Me, contact, data)
-		if err != nil {
-			// Handle error (e.g., log it, retry, etc.)
-			fmt.Printf("Failed to store data on node %s: %v\n", contact.Id, err)
-			return nil, err
+			return key, nil
+		} else {
+			_, err := node.MessageHandler.SendStoreRequest(node.Me, contact, data)
+			if err != nil {
+				// Handle error (e.g., log it, retry, etc.)
+				fmt.Printf("Failed to store data on node %s: %v\n", contact.Id, err)
+				return nil, err
+			}
 		}
 	}
-	return key, nil
+	return nil, nil
 }
 
 func (node *Node) Join(contact *Contact) (err error) {
