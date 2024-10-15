@@ -45,6 +45,8 @@ func (cli *Cli) Main() {
 
 func (cli *Cli) Run(cmd string, args []string) {
 	switch cmd {
+	case "help":
+		cli.Help()
 	case "put":
 		r := cli.Put(args)
 		fmt.Println(r) // debug only
@@ -55,6 +57,8 @@ func (cli *Cli) Run(cmd string, args []string) {
 		cli.Exit(args)
 	case "ping":
 		fmt.Println("pong")
+	case "data":
+		cli.Data()
 	}
 
 }
@@ -100,4 +104,15 @@ func (cli *Cli) Get(args []string) ([]byte, *Node) {
 // terminates the node
 func (cli *Cli) Exit(args []string) {
 	cli.isRunning = false
+}
+
+func (cli *Cli) Help() {
+	fmt.Println("- store data: put <file content>")
+	fmt.Println("- retrieve data: get <file hash>")
+	fmt.Println("- ping the current node: ping")
+	fmt.Println("- exit: exit")
+}
+
+func (cli *Cli) Data() {
+	cli.me.PrintData()
 }

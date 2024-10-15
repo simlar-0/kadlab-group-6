@@ -24,6 +24,10 @@ type NodeCommunication interface {
 	LookupData(hash string) (content []byte, source *Node, err error)
 }
 
+func (node *Node) PrintData() {
+	fmt.Println(node.data)
+}
+
 // NewNode returns a new instance of a Node
 func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
@@ -196,19 +200,31 @@ func (node *Node) Store(data []byte) (key *KademliaID, err error) {
 	closestContacts := node.LookupContact(target)
 	// Send STORE_REQUEST to each of the closest contacts
 	for _, contact := range closestContacts {
-		if node.Me.Id.Equals(contact.Id) {
-			node.data[*key] = data
+		r, err := node.MessageHandler.SendStoreRequest(node.Me, contact, data)
+		if err != nil {
+			// Handle error (e.g., log it, retry, etc.)
+			fmt.Printf("Failed to store data on node %s: %v\n", contact.Id, err)
+			return nil, err
+		}
+
+		if r != nil {
 			return key, nil
-		} else {
-			_, err := node.MessageHandler.SendStoreRequest(node.Me, contact, data)
-			if err != nil {
-				// Handle error (e.g., log it, retry, etc.)
-				fmt.Printf("Failed to store data on node %s: %v\n", contact.Id, err)
-				return nil, err
-			}
 		}
 	}
 	return nil, nil
+}
+
+func (node *Node) StoreData(data []byte) (err error) {
+	fmt.Println("\033[0;31mData stored\033[0m")
+	key := GenerateKey(data)
+	node.data[*key] = data
+	return nil
+}
+
+func (node *Node) GetData(key *KademliaID) (data []byte, err error) {
+	fmt.Println("\033[0;31mData retrieved \033[0m")
+	data = node.data[*key]
+	return data, nil
 }
 
 func (node *Node) Join(contact *Contact) (err error) {
