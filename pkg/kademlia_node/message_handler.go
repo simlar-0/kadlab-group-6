@@ -113,18 +113,14 @@ func (handler *MessageHandler) SendFindNodeResponse(requestRPC *RPC) *RPC {
 }
 
 func (handler *MessageHandler) SendFindValueRequest(source *Contact, destination *Contact, key *KademliaID) (*RPC, error) {
-	//TODO: implement
-	rpc := NewRPC(FindValueRequest, false, NewRandomKademliaID(), nil, source, destination)
+	rpc := NewRPC(FindValueRequest, false, NewRandomKademliaID(), NewPayload(key, nil, nil), source, destination)
 	response, err := handler.Node.Network.SendRequest(rpc)
 	return response, err
 }
 
 func (handler *MessageHandler) SendFindValueResponse(requestRPC *RPC) *RPC {
-	data, err := handler.Node.GetData((*KademliaID)(requestRPC.Payload.Data))
-	if err != nil {
-		fmt.Println("Error during data retrieving")
-	}
-	rpc := NewRPC(FindValueResponse, true, requestRPC.ID, NewPayload(nil, data, requestRPC.Payload.Contacts), requestRPC.Destination, requestRPC.Source)
+	data, _ := handler.Node.GetData(requestRPC.Payload.Key)
+	rpc := NewRPC(FindValueResponse, true, requestRPC.ID, NewPayload(nil, data, nil), requestRPC.Destination, requestRPC.Source)
 	handler.Node.Network.SendResponse(rpc)
 	return rpc
 }

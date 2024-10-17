@@ -8,11 +8,11 @@ import (
 )
 
 type Cli struct {
-	me        *Node
+	me        NodeInterface
 	isRunning bool
 }
 
-func CliInit(node *Node) *Cli {
+func CliInit(node NodeInterface) *Cli {
 	c := &Cli{
 		me:        node,
 		isRunning: true,
@@ -49,16 +49,14 @@ func (cli *Cli) Run(cmd string, args []string) {
 		cli.Help()
 	case "put":
 		r := cli.Put(args)
-		fmt.Println(r) // debug only
+		fmt.Println(r)
 	case "get":
 		r, n := cli.Get(args)
-		fmt.Println(r, n) // debug only
+		fmt.Println(string(r), n)
 	case "exit":
 		cli.Exit(args)
 	case "ping":
 		fmt.Println("pong")
-	case "data":
-		cli.Data()
 	}
 
 }
@@ -67,7 +65,7 @@ func (cli *Cli) Run(cmd string, args []string) {
 // hash of the object, if it can be uploaded successfully.
 func (cli *Cli) Put(args []string) *KademliaID {
 	if len(args) < 1 {
-		fmt.Printf("Put command only take 1 argument: put <file content>")
+		fmt.Println("Put command only take 1 argument: put <file content>")
 		return nil
 	}
 
@@ -85,20 +83,21 @@ func (cli *Cli) Put(args []string) *KademliaID {
 
 // takes a hash as its only argument, and outputs the contents of the object and the
 // node it was retrieved from, if it could be downloaded successfully.
-func (cli *Cli) Get(args []string) ([]byte, *Node) {
+func (cli *Cli) Get(args []string) ([]byte, *Contact) {
 	if len(args) < 1 {
-		fmt.Printf("Get command only take 1 argument: get <file hash>")
+		fmt.Println("Get command only take 1 argument: get <file hash>")
 	}
 
 	hash := args[0]
-	data, node, err := cli.me.LookupData(hash)
+	data, contact, err := cli.me.LookupData(hash)
 
 	if err != nil {
-		fmt.Printf("Couldn't find data")
+		fmt.Printf("Couldn't find data:")
 		return nil, nil
 	}
 
-	return data, node
+	fmt.Println("Data retrieved, here is your content:")
+	return data, contact
 }
 
 // terminates the node
@@ -111,8 +110,4 @@ func (cli *Cli) Help() {
 	fmt.Println("- retrieve data: get <file hash>")
 	fmt.Println("- ping the current node: ping")
 	fmt.Println("- exit: exit")
-}
-
-func (cli *Cli) Data() {
-	cli.me.PrintData()
 }

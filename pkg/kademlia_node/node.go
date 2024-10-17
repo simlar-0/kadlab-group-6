@@ -19,9 +19,9 @@ type Node struct {
 	Alpha          int
 }
 
-type NodeCommunication interface {
+type NodeInterface interface {
 	Store(data []byte) (key *KademliaID, err error)
-	LookupData(hash string) (content []byte, source *Node, err error)
+	LookupData(hash string) (content []byte, source *Contact, err error)
 }
 
 func (node *Node) PrintData() {
@@ -123,7 +123,7 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 	}
 }
 
-func (node *Node) LookupData(hash string) (content []byte, source *Node, err error) {
+func (node *Node) LookupData(hash string) (content []byte, source *Contact, err error) {
 	// first part similar to LookupContact
 	targetID := NewKademliaID(hash)
 	shortlist := NewShortlist(targetID, node.K)
@@ -168,8 +168,7 @@ func (node *Node) LookupData(hash string) (content []byte, source *Node, err err
 		// Process responses
 		for rpc := range responseChannel {
 			if rpc.Payload.Data != nil {
-				// how to return the node?
-				return rpc.Payload.Data, nil, nil // return rpc.Payload.Data, rpc.Source, nil
+				return rpc.Payload.Data, rpc.Source, nil
 			}
 			for _, contact := range rpc.Payload.Contacts {
 				if !contact.Id.Equals(node.Me.Id) {
