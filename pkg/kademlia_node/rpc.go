@@ -21,7 +21,6 @@ type Payload struct {
 
 type RPCType string
 
-// Define constants for valid RPC types
 const (
 	PingRequest       RPCType = "PING_REQUEST"
 	PingResponse      RPCType = "PING_RESPONSE"
@@ -42,7 +41,6 @@ func NewRPC(Type RPCType, IsResponse bool, ID *KademliaID, Payload *Payload, Sou
 }
 
 func ValidateRPC(rpc *RPC) bool {
-	// Check if the RPC type is valid
 	switch rpc.Type {
 	case PingRequest, StoreRequest, FindNodeRequest, FindValueRequest, PingResponse, StoreResponse, FindNodeResponse, FindValueResponse:
 		return true
@@ -51,12 +49,10 @@ func ValidateRPC(rpc *RPC) bool {
 	}
 }
 
-// String returns the string representation of the RPC
 func (rpc *RPC) String() string {
 	return fmt.Sprintf(`RPC(ID: "%s", Type: "%s", IsResponse: "%t", Destination: "%s", Source: "%s", Payload: "%s")`, rpc.ID, rpc.Type, rpc.IsResponse, rpc.Destination, rpc.Source, rpc.Payload)
 }
 
-// String returns the string representation of the Payload
 func (payload *Payload) String() string {
 	return fmt.Sprintf(`Payload(Key: "%s", Data: "%s", Contacts: "%s")`, payload.Key, payload.Data, payload.Contacts)
 }

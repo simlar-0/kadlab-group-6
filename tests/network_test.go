@@ -54,27 +54,6 @@ func TestSendResponse(t *testing.T) {
 	}
 }
 
-func TestWrite(t *testing.T) {
-	node := initNodeNetwork()
-
-	addr, _ := net.ResolveUDPAddr("udp", "127.0.0.1:8002")
-	conn, _ := net.ListenUDP("udp", addr)
-	defer conn.Close()
-
-	message := []byte("test message")
-	go node.Network.Write(conn, message, addr)
-
-	buf := make([]byte, 1024)
-	n, _, err := conn.ReadFromUDP(buf)
-	if err != nil {
-		t.Fatalf("Expected to read from UDP, got error: %v", err)
-	}
-
-	if string(buf[:n]) != string(message) {
-		t.Errorf("Expected message %s, got %s", message, buf[:n])
-	}
-}
-
 func TestGetRandomPortOrDefault(t *testing.T) {
 	port := kademlia.GetRandomPortOrDefault()
 	if port < 1024 || port > 65535 {

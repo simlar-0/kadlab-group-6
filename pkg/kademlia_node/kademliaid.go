@@ -28,8 +28,7 @@ func NewKademliaID(data string) *KademliaID {
 	return &newKademliaID
 }
 
-// NewRandomKademliaID returns a new instance of a random KademliaID,
-// change this to a better version if you like
+// NewRandomKademliaID returns a new instance of a random KademliaID
 func NewRandomKademliaID() *KademliaID {
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
@@ -108,7 +107,6 @@ func (kademliaID KademliaID) CalcDistance(target *KademliaID) *KademliaID {
 	return &result
 }
 
-// String returns a simple string representation of a KademliaID
 func (kademliaID *KademliaID) String() string {
 	return hex.EncodeToString(kademliaID[0:IDLength])
 }

@@ -27,22 +27,17 @@ func (routingTable *RoutingTable) AddContact(contact *Contact) {
 	routingTable.Mutex.Lock()
 	defer routingTable.Mutex.Unlock()
 
-	// Update the distance of the contact
 	contact.CalcDistance(routingTable.Node.Me.Id)
 
 	bucketIndex := routingTable.GetBucketIndex(contact.Id)
 
 	bucket := routingTable.Buckets[bucketIndex]
-	// Check if the bucket is full
 	if bucket.Len() >= routingTable.Node.K {
-		// Ping the least recently seen contact
 		leastRecent := bucket.GetLeastRecentlySeenContact()
 		_, err := routingTable.Node.MessageHandler.SendPingRequest(routingTable.Node.Me, &leastRecent)
 		if err == nil {
-			// If the contact is still alive, move it to the front of the bucket
 			bucket.AddContact(leastRecent)
 		} else {
-			// If the contact is not alive, remove it from the bucket
 			bucket.RemoveContact(leastRecent)
 		}
 	}

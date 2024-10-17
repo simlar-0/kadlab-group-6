@@ -13,7 +13,6 @@ type shortlist struct {
 	K        int
 }
 
-// NewShortlist creates a new shortlist
 func NewShortlist(target *KademliaID, k int) *shortlist {
 	return &shortlist{
 		Contacts: list.New(),
@@ -24,13 +23,12 @@ func NewShortlist(target *KademliaID, k int) *shortlist {
 
 // AddContact adds a contact to the shortlist
 func (shortlist *shortlist) AddContact(contact *Contact) {
-	// If the contact is already in the shortlist, skip
 	if !shortlist.Contains(contact) {
 		contact.CalcDistance(shortlist.Target)
 		shortlist.Contacts.PushBack(contact)
 		shortlist.Sort()
+
 		if shortlist.Contacts.Len() > shortlist.K {
-			// Removes the furthest away contact
 			shortlist.Contacts.Remove(shortlist.Contacts.Back())
 		}
 	}
@@ -62,7 +60,8 @@ func (shortlist *shortlist) Sort() {
 	}
 }
 
-// GetClosestContacts returns the closest contacts from the shortlist
+// GetClosestContacts returns the k closest contacts from the shortlist
+// that have not been contacted
 func (shortlist *shortlist) GetClosestContactsNotContacted(k int, contacted map[*KademliaID]bool) []*Contact {
 	var contacts []*Contact
 	for elt := shortlist.Contacts.Front(); elt != nil; elt = elt.Next() {
@@ -120,7 +119,6 @@ func (shortlist *shortlist) Contains(contact *Contact) bool {
 	return false
 }
 
-// String returns a simple string representation of a shortlist
 func (shortlist *shortlist) String() string {
 	var contacts []string
 	for elt := shortlist.Contacts.Front(); elt != nil; elt = elt.Next() {

@@ -33,10 +33,9 @@ func (handler *MessageHandler) ProcessRequest(rpc *RPC) (*RPC, error) {
 		return nil, fmt.Errorf("invalid RPC")
 	}
 
-	fmt.Println("RPC: ", rpc)
-	// Add the source to the routing table or update it
+	fmt.Println("Processing request RPC: ", rpc.Type, " ", rpc.ID)
 	handler.Node.RoutingTable.AddContact(rpc.Source)
-	fmt.Println("Added contact to routing table")
+	fmt.Println("Added contact to routing table: ", rpc.Source)
 
 	switch rpc.Type {
 	case PingRequest:
@@ -113,7 +112,6 @@ func (handler *MessageHandler) SendFindNodeResponse(requestRPC *RPC) *RPC {
 }
 
 func (handler *MessageHandler) SendFindValueRequest(source *Contact, destination *Contact, key *KademliaID) (*RPC, error) {
-	//TODO: implement
 	rpc := NewRPC(FindValueRequest, false, NewRandomKademliaID(), nil, source, destination)
 	response, err := handler.Node.Network.SendRequest(rpc)
 	return response, err

@@ -13,7 +13,7 @@ services:
       - BOOTSTRAP_PORT=4000
       - BOOTSTRAP_ID=FFFFFFFF00000000000000000000000000000000
 
-  kademliaNodes:
+  kademlia-node:
     image: kadlab:latest
     stdin_open: true
     tty: true

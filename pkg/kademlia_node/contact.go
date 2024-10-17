@@ -14,7 +14,6 @@ type Contact struct {
 	Distance *KademliaID `json:"Distance"`
 }
 
-// NewContact returns a new instance of a Contact
 func NewContact(id *KademliaID, address string, port int) *Contact {
 	return &Contact{id, address, port, nil}
 }
@@ -30,13 +29,11 @@ func (contact *Contact) Less(otherContact *Contact) bool {
 	return contact.Distance.Less(otherContact.Distance)
 }
 
-// String returns a simple string representation of a Contact
 func (contact *Contact) String() string {
 	return fmt.Sprintf(`contact(Id: "%s", Address: "%s":"%d", Distance: "%s")`, contact.Id, contact.Ip, contact.Port, contact.Distance)
 }
 
-// ContactCandidates definition
-// stores an array of Contacts
+// ContactCandidates definition, stores an array of Contacts
 type ContactCandidates struct {
 	Contacts []*Contact
 }

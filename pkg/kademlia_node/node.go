@@ -28,7 +28,6 @@ func (node *Node) PrintData() {
 	fmt.Println(node.data)
 }
 
-// NewNode returns a new instance of a Node
 func NewNode(id *KademliaID) *Node {
 	k, _ := strconv.Atoi(os.Getenv("K"))
 	alpha, _ := strconv.Atoi(os.Getenv("ALPHA"))
@@ -51,9 +50,10 @@ func NewNode(id *KademliaID) *Node {
 	return node
 }
 
+// LookupContact finds the k closest contacts to the target
+// Uses strict parallelism to find the k closest contacts to the destination
+// i.e. Alpha concurrent FindNode requests
 func (node *Node) LookupContact(target *Contact) []*Contact {
-	// Uses strict parallelism to find the k closest contacts to the destination
-	// i.e. Alpha concurrent FindNode requests
 	shortlist := NewShortlist(target.Id, node.K)
 	contacted := make(map[*KademliaID]bool)
 
@@ -84,24 +84,20 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 				defer wg.Done()
 				contacts, err := node.MessageHandler.SendFindNodeRequest(node.Me, c, target.Id)
 				if err != nil {
-					// Dead contacts are removed from the shortlist
 					shortlist.RemoveContact(c)
 					return
 				}
-				// Add the k closest contacts from the response to the shortlist
 				responseChannel <- contacts.Payload.Contacts
 			}(contact)
 		}
-		// Wait for all goroutines to finish
+
 		go func() {
 			wg.Wait()
 			close(responseChannel)
 		}()
 
-		// Process responses
 		for contacts := range responseChannel {
 			for _, contact := range contacts {
-				// if the contact is me, skip
 				if !contact.Id.Equals(node.Me.Id) {
 					shortlist.AddContact(contact)
 				}
@@ -123,6 +119,7 @@ func (node *Node) LookupContact(target *Contact) []*Contact {
 	}
 }
 
+// LookupData finds the data with the given hash
 func (node *Node) LookupData(hash string) (content []byte, source *Node, err error) {
 	// first part similar to LookupContact
 	targetID := NewKademliaID(hash)
@@ -162,14 +159,14 @@ func (node *Node) LookupData(hash string) (content []byte, source *Node, err err
 			}(contact)
 		}
 
-		wg.Wait()
-		close(responseChannel)
+		go func() {
+			wg.Wait()
+			close(responseChannel)
+		}()
 
-		// Process responses
 		for rpc := range responseChannel {
 			if rpc.Payload.Data != nil {
-				// how to return the node?
-				return rpc.Payload.Data, nil, nil // return rpc.Payload.Data, rpc.Source, nil
+				return rpc.Payload.Data, nil, nil
 			}
 			for _, contact := range rpc.Payload.Contacts {
 				if !contact.Id.Equals(node.Me.Id) {
@@ -229,18 +226,13 @@ func (node *Node) GetData(key *KademliaID) (data []byte, err error) {
 
 func (node *Node) Join(contact *Contact) (err error) {
 	fmt.Println("Joining the network")
-	// Ping the contact to see if it is alive
 	_, e := node.MessageHandler.SendPingRequest(node.Me, contact)
 	if e != nil {
 		return e
 	}
-	// Add the contact to the routing table
 	node.RoutingTable.AddContact(contact)
-	// Perform a lookupNode on myself
 	contacts := node.LookupContact(node.Me)
-	// Update the routing table with the results
 	node.RoutingTable.UpdateRoutingTable(contacts)
-	// Refresh all buckets further away than the closest neighbor
 	node.RefreshBuckets()
 	fmt.Println("Joined the network")
 	return nil
@@ -248,11 +240,8 @@ func (node *Node) Join(contact *Contact) (err error) {
 
 // RefreshBuckets refreshes all buckets further away than the closest neighbor
 func (node *Node) RefreshBuckets() {
-	// Get the closest neighbor
 	neighbor := node.RoutingTable.FindClosestContacts(node.Me.Id)[0]
-	// Get the bucket index of the neighbor
 	bucketIndex := node.RoutingTable.GetBucketIndex(neighbor.Id)
-	// Refresh all buckets further away than the neighbor
 	for i := bucketIndex + 1; i < IDLength*8; i++ {
 		target := NewRandomKademliaIDInBucket(i, node.Me.Id)
 		contacts := node.LookupContact(NewContact(target, "", 0))
