@@ -98,3 +98,27 @@ func TestLookupContact(t *testing.T) {
 	}
 
 }
+
+func TestStore(t *testing.T) {
+	node := initTestNode()
+
+	args := []byte("test")
+
+	contact1 := kademlia.NewContact(kademlia.NewKademliaID("0000000000000000000000000000000000000001"), "127.0.0.1", 8000)
+	contact2 := kademlia.NewContact(kademlia.NewKademliaID("0000000000000000000000000000000000000002"), "127.0.0.1", 8000)
+	contact3 := kademlia.NewContact(kademlia.NewKademliaID("0000000000000000000000000000000000000003"), "127.0.0.1", 8000)
+
+	node.RoutingTable.AddContact(contact1)
+	node.RoutingTable.AddContact(contact2)
+	node.RoutingTable.AddContact(contact3)
+
+	key, err := node.Store(args)
+
+	if err != nil {
+		t.Errorf("Error happened during store")
+	}
+
+	if !key.Equals(kademlia.GenerateKey(args)) {
+		t.Errorf("Error: Wrong key returned")
+	}
+}

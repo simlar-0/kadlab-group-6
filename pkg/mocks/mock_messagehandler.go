@@ -52,11 +52,15 @@ func (handler *MockMessageHandler) SendPingResponse(requestRPC *kademlia.RPC) *k
 }
 
 func (handler *MockMessageHandler) SendStoreRequest(source *kademlia.Contact, destination *kademlia.Contact, data []byte) (*kademlia.RPC, error) {
-	return nil, nil
+	rpc := kademlia.NewRPC(kademlia.StoreRequest, false, kademlia.NewRandomKademliaID(), kademlia.NewPayload(kademlia.NewRandomKademliaID(), data, nil), source, destination)
+	response, err := handler.Node.Network.SendRequest(rpc)
+	return response, err
 }
 
 func (handler *MockMessageHandler) SendStoreResponse(requestRPC *kademlia.RPC) *kademlia.RPC {
-	return nil
+	rpc := kademlia.NewRPC(kademlia.StoreResponse, true, requestRPC.ID, nil, requestRPC.Destination, requestRPC.Source)
+	handler.Node.Network.SendResponse(rpc)
+	return rpc
 }
 
 func (handler *MockMessageHandler) SendFindNodeRequest(source *kademlia.Contact, destination *kademlia.Contact, target *kademlia.KademliaID) (*kademlia.RPC, error) {
@@ -72,11 +76,15 @@ func (handler *MockMessageHandler) SendFindNodeResponse(requestRPC *kademlia.RPC
 }
 
 func (handler *MockMessageHandler) SendFindValueRequest(source *kademlia.Contact, destination *kademlia.Contact, key *kademlia.KademliaID) (*kademlia.RPC, error) {
-	return nil, nil
+	rpc := kademlia.NewRPC(kademlia.FindValueRequest, false, kademlia.NewRandomKademliaID(), kademlia.NewPayload(key, nil, nil), source, destination)
+	response, err := handler.Node.Network.SendRequest(rpc)
+	return response, err
 }
 
 func (handler *MockMessageHandler) SendFindValueResponse(requestRPC *kademlia.RPC) *kademlia.RPC {
-	return nil
+	rpc := kademlia.NewRPC(kademlia.FindValueResponse, true, requestRPC.ID, kademlia.NewPayload(nil, []byte("test"), nil), requestRPC.Destination, requestRPC.Source)
+	handler.Node.Network.SendResponse(rpc)
+	return rpc
 }
 
 type MockMessageHandlerError struct {

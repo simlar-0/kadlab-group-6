@@ -4,17 +4,28 @@ import (
 	"bytes"
 	kademlia "kadlab-group-6/pkg/kademlia_node"
 	mock "kadlab-group-6/pkg/mocks"
+	"os"
 	"testing"
 )
 
 func TestInit(t *testing.T) {
 	n := &mock.MockNode{}
 
+	simulatedInput := "help\n exit\n"
+	originalStdin := os.Stdin
+	r, w, _ := os.Pipe()
+	w.Write([]byte(simulatedInput))
+	w.Close()
+	os.Stdin = r
+
 	cli := kademlia.CliInit(n)
 
-	if cli != nil {
+	if cli == nil {
 		t.Errorf("cli initialisation failed")
 	}
+
+	cli.Main()
+	os.Stdin = originalStdin
 }
 
 func TestErrorPut(t *testing.T) {

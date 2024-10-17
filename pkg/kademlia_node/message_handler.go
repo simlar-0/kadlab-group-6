@@ -105,7 +105,6 @@ func (handler *MessageHandler) SendFindNodeRequest(source *Contact, destination 
 }
 
 func (handler *MessageHandler) SendFindNodeResponse(requestRPC *RPC) *RPC {
-	// Get the k closest nodes to the target
 	contacts := handler.Node.RoutingTable.FindClosestContacts(requestRPC.Payload.Key)
 	rpc := NewRPC(FindNodeResponse, true, requestRPC.ID, NewPayload(nil, nil, contacts), requestRPC.Destination, requestRPC.Source)
 	handler.Node.Network.SendResponse(rpc)
@@ -113,6 +112,7 @@ func (handler *MessageHandler) SendFindNodeResponse(requestRPC *RPC) *RPC {
 }
 
 func (handler *MessageHandler) SendFindValueRequest(source *Contact, destination *Contact, key *KademliaID) (*RPC, error) {
+	fmt.Print(key)
 	rpc := NewRPC(FindValueRequest, false, NewRandomKademliaID(), NewPayload(key, nil, nil), source, destination)
 	response, err := handler.Node.Network.SendRequest(rpc)
 	return response, err
