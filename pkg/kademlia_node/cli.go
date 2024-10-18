@@ -55,6 +55,8 @@ func (cli *Cli) Run(cmd string, args []string) {
 		fmt.Println(string(r), n)
 	case "exit":
 		cli.Exit(args)
+	case "quit":
+		cli.Quit(args)
 	case "ping":
 		fmt.Println("pong")
 	}
@@ -102,6 +104,11 @@ func (cli *Cli) Get(args []string) ([]byte, *Contact) {
 
 // terminates the node
 func (cli *Cli) Exit(args []string) {
+	cli.isRunning = false
+	os.Exit(0)
+}
+
+func (cli *Cli) Quit(args []string) {
 	cli.isRunning = false
 }
 

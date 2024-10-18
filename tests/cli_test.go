@@ -11,7 +11,7 @@ import (
 func TestInit(t *testing.T) {
 	n := &mock.MockNode{}
 
-	simulatedInput := "help\n exit\n"
+	simulatedInput := "help\n quit\n"
 	originalStdin := os.Stdin
 	r, w, _ := os.Pipe()
 	w.Write([]byte(simulatedInput))

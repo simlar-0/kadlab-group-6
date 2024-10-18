@@ -3,6 +3,7 @@ package kademlia_node
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -142,7 +143,7 @@ func (node *Node) LookupData(hash string) (content []byte, source *Contact, err 
 		var wg sync.WaitGroup
 
 		if len(alphaClosest) == 0 {
-			return nil, nil, fmt.Errorf("data not found")
+			return nil, nil, errors.New("data not found")
 		}
 
 		// Send asynchronous FindNode requests to the alpha closest (not contacted) contacts in the shortlist
@@ -179,7 +180,7 @@ func (node *Node) LookupData(hash string) (content []byte, source *Contact, err 
 
 		newClosestContacts := shortlist.GetClosestContacts(node.K)
 		if len(newClosestContacts) == 0 || shortlist.AllContacted(contacted) {
-			return nil, nil, fmt.Errorf("data not found")
+			return nil, nil, errors.New("data not found")
 		}
 	}
 }

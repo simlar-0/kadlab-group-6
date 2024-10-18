@@ -23,6 +23,12 @@ func (handler *MockMessageHandler) ProcessRequest(rpc *kademlia.RPC) (*kademlia.
 	// Add the source to the routing table or update it
 	handler.Node.RoutingTable.AddContact(rpc.Source)
 	fmt.Println("Added contact to routing table")
+
+	if rpc.Type == kademlia.FindValueRequest {
+		rpc := handler.SendFindValueResponse(rpc)
+		return rpc, nil
+	}
+
 	return nil, nil
 }
 
@@ -76,15 +82,13 @@ func (handler *MockMessageHandler) SendFindNodeResponse(requestRPC *kademlia.RPC
 }
 
 func (handler *MockMessageHandler) SendFindValueRequest(source *kademlia.Contact, destination *kademlia.Contact, key *kademlia.KademliaID) (*kademlia.RPC, error) {
-	rpc := kademlia.NewRPC(kademlia.FindValueRequest, false, kademlia.NewRandomKademliaID(), kademlia.NewPayload(key, nil, nil), source, destination)
+	rpc := kademlia.NewRPC(kademlia.FindValueRequest, false, kademlia.NewRandomKademliaID(), kademlia.NewPayload(nil, []byte("test"), nil), source, destination)
 	response, err := handler.Node.Network.SendRequest(rpc)
 	return response, err
 }
 
 func (handler *MockMessageHandler) SendFindValueResponse(requestRPC *kademlia.RPC) *kademlia.RPC {
-	rpc := kademlia.NewRPC(kademlia.FindValueResponse, true, requestRPC.ID, kademlia.NewPayload(nil, []byte("test"), nil), requestRPC.Destination, requestRPC.Source)
-	handler.Node.Network.SendResponse(rpc)
-	return rpc
+	return nil
 }
 
 type MockMessageHandlerError struct {
